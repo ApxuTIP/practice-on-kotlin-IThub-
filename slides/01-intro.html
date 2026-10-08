@@ -308,6 +308,24 @@
         }
         .edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
         [contenteditable="true"] { outline: 1px dashed var(--accent); }
+
+        /* Real application screenshots for the workshop. */
+        .walkthrough .pad { top: 128px; bottom: 90px; }
+        .walkthrough h2 { font-size: 54px; margin-bottom: 18px; }
+        .walkthrough .instruction { font-size: 30px; line-height: 1.35; color: var(--muted); margin-bottom: 24px; }
+        .walkthrough figure { height: 672px; display: flex; align-items: center; justify-content: center; background: #0e0f12; }
+        .walkthrough figure img { width: 100%; height: 100%; object-fit: contain; }
+        .walkthrough .caption { font-size: 24px; line-height: 1.35; color: var(--muted); margin-top: 16px; }
+        .walkthrough .caption code { color: var(--accent); }
+        .walkthrough figure { margin: 0; border: 1px solid #3c3f46; border-radius: 12px; overflow: hidden; }
+        #idea-project figure { height: 672px; }
+        .wizard div { height: 100%; aspect-ratio: 1600 / 835; }
+        .walkthrough .wizard img { display: block; height: auto; width: 100%; }
+        #httpie-response figure { height: 620px; flex-direction: column; gap: 32px; padding: 20px; }
+        .walkthrough .response img:first-child { height: 245px; }
+        .walkthrough .response img:last-child { height: 280px; }
+        .page { bottom: 36px; }
+        .deck-controls { bottom: 8px; }
     </style>
 </head>
 <body>
@@ -322,7 +340,7 @@
                 <div class="gutter"></div>
                 <p class="kicker reveal">ИТхаб</p>
                 <h1 class="reveal">Kotlin, Ktor<br>и первый API</h1>
-                <span class="page">01</span>
+                <span class="page">1</span>
             </section>
 
             <!-- 3 -->
@@ -332,7 +350,7 @@
                 <h1 class="reveal">Что поставить</h1>
                 <p class="lead reveal">Git, IntelliJ IDEA, JDK, curl, HTTPie. Docker сегодня не нужен.</p>
                 <div class="idx">01</div>
-            </section>
+            <span class="page">2</span></section>
 
             <!-- 4 -->
             <section class="slide">
@@ -343,7 +361,7 @@
                     <div class="grid-2">
                         <div class="card reveal">
                             <h3>JDK 21</h3>
-                            <p>Идёт вместе с IntelliJ. Отдельно — Temurin 21.</p>
+                            <p>Для проекта нужен JDK 21. Например, Temurin 21 или OpenJDK 21.</p>
                             <p class="url" style="margin-top:14px">adoptium.net</p>
                         </div>
                         <div class="card reveal">
@@ -363,7 +381,7 @@
                         </div>
                     </div>
                 </div>
-                <span class="page">02</span>
+                <span class="page">3</span>
             </section>
 
             <!-- 5 -->
@@ -374,12 +392,12 @@
                     <h2 class="reveal" style="margin-bottom:28px">IntelliJ IDEA Community</h2>
                     <ul class="plain">
                         <li class="reveal">Сайт: <span class="mono" style="color:var(--accent)">jetbrains.com/idea/download</span></li>
-                        <li class="reveal">Вкладка Community, не Ultimate. Windows / macOS / Linux.</li>
-                        <li class="reveal">При установке оставь галку про JDK — 21 подтянется сам.</li>
-                        <li class="reveal">Плагин Ktor можно поставить из Marketplace позже, сегодня хватит мастера проекта.</li>
+                        <li class="reveal">Community 2025.2 или бесплатные возможности единой IntelliJ IDEA. Windows / macOS / Linux.</li>
+                        <li class="reveal">В мастере проекта выбери JDK 21. Если его нет, нажми Download JDK и выбери версию 21.</li>
+                        <li class="reveal">В Community создаём Kotlin / Gradle и добавляем Ktor в build.gradle.kts.</li>
                     </ul>
                 </div>
-                <span class="page">03</span>
+                <span class="page">4</span>
             </section>
 
             <!-- 6 -->
@@ -395,7 +413,7 @@
                         <li class="reveal">Логин пришли мне сегодня или к среде — добавлю в репу курса.</li>
                     </ul>
                 </div>
-                <span class="page">04</span>
+                <span class="page">5</span>
             </section>
 
             <section class="slide">
@@ -410,7 +428,7 @@
                         <li class="reveal">HTTPie не заменяет: curl — на ходу, HTTPie — коллекция на весь курс.</li>
                     </ul>
                 </div>
-                <span class="page">05</span>
+                <span class="page">6</span>
             </section>
 
             <section class="slide">
@@ -425,7 +443,7 @@
                         <li class="reveal">У каждого своя коллекция под свой API. Сегодня заведём первую.</li>
                     </ul>
                 </div>
-                <span class="page">06</span>
+                <span class="page">7</span>
             </section>
 
             <!-- 7 -->
@@ -445,7 +463,7 @@
                         </div>
                     </div>
                 </div>
-                <span class="page">07</span>
+                <span class="page">8</span>
             </section>
 
             <!-- 8 -->
@@ -460,7 +478,7 @@
                         <li class="reveal">Цель к концу курса — мини-API под выбранный проект. Сегодня поднимаем сервер.</li>
                     </ul>
                 </div>
-                <span class="page">08</span>
+                <span class="page">9</span>
             </section>
 
             <!-- 9 -->
@@ -470,7 +488,7 @@
                 <h1 class="reveal">Зачем Kotlin</h1>
                 <p class="lead reveal">Коротко история и почему в названии курса «мультиплатформа».</p>
                 <div class="idx">02</div>
-            </section>
+            <span class="page">10</span></section>
 
             <!-- 10 -->
             <section class="slide sec-kotlin">
@@ -484,7 +502,7 @@
                         <div class="card reveal"><h3>Сейчас</h3><p>Один язык: Android, бэкенд, частично iOS и веб. Мы берём бэкенд.</p></div>
                     </div>
                 </div>
-                <span class="page">09</span>
+                <span class="page">11</span>
             </section>
 
             <!-- 11 -->
@@ -500,7 +518,7 @@
                         <li class="reveal">Корутины — асинхронность без колбэк-ада.</li>
                     </ul>
                 </div>
-                <span class="page">10</span>
+                <span class="page">12</span>
             </section>
 
             <!-- 12 -->
@@ -515,7 +533,7 @@
                         <p>Бэкенд на Ktor, JVM. Это тот же Kotlin. Android и iOS в этом коротком курсе не пишем — не влезем за 10 пар. Язык тот же, если пойдёте в мобилку.</p>
                     </div>
                 </div>
-                <span class="page">11</span>
+                <span class="page">13</span>
             </section>
 
             <!-- 13 -->
@@ -525,7 +543,7 @@
                 <h1 class="reveal">Основы языка</h1>
                 <p class="lead reveal">типы, val, null, функции, class, data class, коллекции, when.</p>
                 <div class="idx">03</div>
-            </section>
+            <span class="page">14</span></section>
 
             <section class="slide">
                 <div class="gutter"></div>
@@ -540,7 +558,7 @@
 <span class="kw">val</span> count = <span class="num">10</span>    <span class="cmt">// тип не пишем — компилятор сам видит Int</span></pre>
                     <p class="lead reveal" style="margin-top:24px">Тип после двоеточия, с большой буквы: <span class="mono">Int</span>, <span class="mono">String</span>, <span class="mono">Boolean</span>. Можно не писать, если справа очевидно.</p>
                 </div>
-                <span class="page">12</span>
+                <span class="page">15</span>
             </section>
 
             <!-- 14 -->
@@ -558,7 +576,7 @@ count += <span class="num">5</span>
 
 <span class="kw">val</span> message: String = <span class="str">"Hello, Kotlin"</span></pre>
                 </div>
-                <span class="page">13</span>
+                <span class="page">16</span>
             </section>
 
             <!-- 15 -->
@@ -573,7 +591,7 @@ count += <span class="num">5</span>
 <span class="kw">val</span> len = nick?.length ?: <span class="num">0</span>     <span class="cmt">// безопасный вызов + Elvis</span></pre>
                     <p class="lead reveal" style="margin-top:28px">Вопрос <span class="mono">?</span> на типе. Без него компилятор не пустит null.</p>
                 </div>
-                <span class="page">14</span>
+                <span class="page">17</span>
             </section>
 
             <!-- 16 -->
@@ -588,7 +606,7 @@ count += <span class="num">5</span>
 
 <span class="kw">fun</span> <span class="fn">sum</span>(a: Int, b: Int) = a + b   <span class="cmt">// коротко, тип сам</span></pre>
                 </div>
-                <span class="page">15</span>
+                <span class="page">18</span>
             </section>
 
             <!-- 17 -->
@@ -608,7 +626,7 @@ c.inc()
 println(c.value)   <span class="cmt">// 1</span></pre>
                     <p class="lead reveal" style="margin-top:20px">Обычный класс — поведение и состояние. Поля можно сразу в конструкторе: <span class="mono">class User(val name: String)</span>.</p>
                 </div>
-                <span class="page">16</span>
+                <span class="page">19</span>
             </section>
 
             <section class="slide">
@@ -626,7 +644,7 @@ println(c.value)   <span class="cmt">// 1</span></pre>
 println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span></pre>
                     <p class="lead reveal" style="margin-top:24px">Частный случай class для данных. equals, hashCode, copy, toString — сами. JSON-модели — отсюда.</p>
                 </div>
-                <span class="page">17</span>
+                <span class="page">20</span>
             </section>
 
             <!-- 18 -->
@@ -644,7 +662,7 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
 <span class="kw">val</span> cheap = items.filter { it.price &lt; <span class="num">130</span> }
 <span class="kw">val</span> names = items.map { it.name }</pre>
                 </div>
-                <span class="page">18</span>
+                <span class="page">21</span>
             </section>
 
             <!-- 19 -->
@@ -660,7 +678,7 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
 }</pre>
                     <p class="lead reveal" style="margin-top:28px">Это if-else, который возвращает значение. Удобно в обработчике запроса.</p>
                 </div>
-                <span class="page">19</span>
+                <span class="page">22</span>
             </section>
 
             <!-- 20 -->
@@ -670,21 +688,34 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
                 <h1 class="reveal">Первый проект</h1>
                 <p class="lead reveal">Ktor в IDEA, сервер на 8080, Hello World в браузере.</p>
                 <div class="idx">04</div>
-            </section>
+            <span class="page">23</span></section>
 
             <!-- 21 -->
-            <section class="slide sec-run">
-                <div class="gutter"></div>
-                <p class="kicker">Запуск</p>
-                <div class="pad">
-                    <h2 class="reveal" style="margin-bottom:28px">Новый проект в IDEA</h2>
-                    <ul class="plain">
-                        <li class="reveal">New Project → Ktor. Если мастера нет — Gradle / Kotlin JVM, добавим зависимость руками.</li>
-                        <li class="reveal">Engine: Netty. Plugin: Routing. Больше ничего не включай.</li>
-                        <li class="reveal">JDK 21. Имя модуля любое, например <span class="mono">shop</span>.</li>
-                    </ul>
-                </div>
-                <span class="page">20</span>
+            <section class="slide sec-run walkthrough" id="idea-project">
+                <div class="gutter"></div><p class="kicker">IDEA / шаг 1</p>
+                <div class="pad"><h2 class="reveal">Новый проект: Kotlin и Gradle</h2>
+                    <p class="instruction reveal">File → New → Project. Слева Kotlin, система сборки Gradle, JDK 21.</p>
+                    <figure class="reveal wizard"><div><img src="screenshots/idea-new-project-fields.png" alt="Поля нового проекта: имя, Kotlin, Gradle, JDK 21 и Kotlin DSL"><img src="screenshots/idea-new-project-create.png" alt="Кнопка Create внизу мастера"></div></figure>
+                    <p class="caption reveal">Имя: <code>ktor-hello-world</code>. DSL: Kotlin. Нажми Create и дождись импорта.</p>
+                </div><span class="page">24</span>
+            </section>
+
+<section class="slide sec-run walkthrough" id="idea-gradle">
+                <div class="gutter"></div><p class="kicker">IDEA / шаг 2</p>
+                <div class="pad"><h2 class="reveal">Зависимости Ktor</h2>
+                    <p class="instruction reveal">Скопируй готовый <a href="../materials/01-first-pair/build.gradle.kts" target="_blank" rel="noopener" style="color:var(--accent)">build.gradle.kts</a> из <code>materials/01-first-pair/</code> в свой проект.</p>
+                    <figure class="reveal"><img src="screenshots/idea-gradle-detail.png" alt="Зависимости Ktor" loading="eager"></figure>
+                    <p class="caption reveal">Замени содержимое файла в корне проекта и нажми Load Gradle Changes. <a href="../materials/01-first-pair/README.md" target="_blank" rel="noopener" style="color:var(--accent)">Инструкция в опорных материалах ↗</a></p>
+                </div><span class="page">25</span>
+            </section>
+
+<section class="slide sec-run walkthrough" id="idea-run">
+                <div class="gutter"></div><p class="kicker">IDEA / шаг 3</p>
+                <div class="pad"><h2 class="reveal">Маршрут GET / и запуск</h2>
+                    <p class="instruction reveal">В Application.kt задаём порт и ответ Hello World! Затем запускаем main или задачу Gradle run.</p>
+                    <figure class="reveal"><img src="screenshots/idea-application-run-detail.png" alt="Маршрут GET / и запуск" loading="eager"></figure>
+                    <p class="caption reveal">Зелёный треугольник у <code>main</code> запускает сервер. Здесь порт <code>18080</code>, потому что <code>8080</code> занят.</p>
+                </div><span class="page">26</span>
             </section>
 
             <!-- 22 -->
@@ -697,13 +728,13 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
     embeddedServer(Netty, port = <span class="num">8080</span>) {
         routing {
             get(<span class="str">"/"</span>) {
-                call.respondText(<span class="str">"Hello, Ktor"</span>)
+                call.respondText(<span class="str">"Hello World!"</span>)
             }
         }
     }.start(wait = <span class="kw">true</span>)
 }</pre>
                 </div>
-                <span class="page">21</span>
+                <span class="page">27</span>
             </section>
 
             <!-- 23 -->
@@ -714,15 +745,24 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
                     <h2 class="reveal" style="margin-bottom:20px">Проверка</h2>
                     <ul class="plain">
                         <li class="reveal">Run в IDEA. В логе: <span class="mono">Application started in …</span></li>
-                        <li class="reveal">Браузер: <span class="mono">http://127.0.0.1:8080/</span> — строка Hello, Ktor</li>
+                        <li class="reveal">Браузер: <span class="mono">http://127.0.0.1:8080/</span> — строка Hello World!</li>
                     </ul>
                     <pre class="reveal" style="font-size:28px;margin-top:28px">curl -v http://127.0.0.1:8080/</pre>
                     <p class="lead reveal" style="margin-top:20px"><span class="mono">-v</span> — видно запрос, статус, заголовки. Потом поменяй текст на «Привет, мир» и проверь ещё раз.</p>
                 </div>
-                <span class="page">22</span>
+                <span class="page">28</span>
             </section>
 
-            <section class="slide sec-run">
+<section class="slide sec-run walkthrough" id="curl-demo">
+                <div class="gutter"></div><p class="kicker">curl / проверка</p>
+                <div class="pad"><h2 class="reveal">curl из терминала IDEA</h2>
+                    <p class="instruction reveal">Открой Terminal внизу IDEA. Выполни <code>curl -i http://localhost:18080/</code>.</p>
+                    <figure class="reveal"><img src="screenshots/idea-curl-detail.png" alt="Команда curl и ответ HTTP 200 Hello World в терминале IDEA"></figure>
+                    <p class="caption reveal"><code>-i</code> добавляет заголовки. Проверяем <code>200 OK</code> и <code>Hello World!</code>. Если сервер на 8080, укажи 8080.</p>
+                </div><span class="page">29</span>
+            </section>
+
+                        <section class="slide sec-run">
                 <div class="gutter"></div>
                 <p class="kicker">Запросы</p>
                 <div class="pad">
@@ -738,22 +778,34 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
                         </div>
                     </div>
                 </div>
-                <span class="page">23</span>
+                <span class="page">30</span>
             </section>
 
-            <section class="slide sec-run">
-                <div class="gutter"></div>
-                <p class="kicker">Запросы</p>
-                <div class="pad">
-                    <h2 class="reveal" style="margin-bottom:28px">Своя коллекция</h2>
-                    <ul class="plain">
-                        <li class="reveal">New → Collection. Имя — как домен API. Сегодня: <span class="mono">shop</span>.</li>
-                        <li class="reveal">Внутри папки запросы: <span class="mono">health</span>, <span class="mono">hello</span>, <span class="mono">products</span>, <span class="mono">product by id</span>, <span class="mono">filter</span>.</li>
-                        <li class="reveal">Base URL: <span class="mono">http://127.0.0.1:8080</span>. Потом сменишь на прод, запросы останутся.</li>
-                        <li class="reveal">Коллекцию не шарим на всех: у каждого свой API и свой набор.</li>
-                    </ul>
-                </div>
-                <span class="page">24</span>
+            <section class="slide sec-run walkthrough" id="httpie-collection">
+                <div class="gutter"></div><p class="kicker">HTTPie / шаг 1</p>
+                <div class="pad"><h2 class="reveal">Новая коллекция ITHUB</h2>
+                    <p class="instruction reveal">Кнопка + рядом с названием пространства. Collection, имя ITHUB, затем Create.</p>
+                    <figure class="reveal"><img src="screenshots/httpie-create-collection-detail.png" alt="Новая коллекция ITHUB" loading="eager"></figure>
+                    <p class="caption reveal">Коллекция объединяет запросы к одному API. Для localhost аккаунт и VPN не нужны.</p>
+                </div><span class="page">31</span>
+            </section>
+
+<section class="slide sec-run walkthrough" id="httpie-request">
+                <div class="gutter"></div><p class="kicker">HTTPie / шаг 2</p>
+                <div class="pad"><h2 class="reveal">Запрос «Привет мир» внутри коллекции</h2>
+                    <p class="instruction reveal">Плюс у ITHUB создаёт запрос. Метод GET, адрес <code>http://localhost:18080/</code>.</p>
+                    <figure class="reveal"><img src="screenshots/httpie-save-request-detail.png" alt="Запрос «Привет мир» внутри коллекции" loading="eager"></figure>
+                    <p class="caption reveal">Меню запроса: Rename and move… Название <code>Привет мир</code>, коллекция <code>ITHUB</code>, кнопка Save.</p>
+                </div><span class="page">32</span>
+            </section>
+
+<section class="slide sec-run walkthrough" id="httpie-response">
+                <div class="gutter"></div><p class="kicker">HTTPie / шаг 3</p>
+                <div class="pad"><h2 class="reveal">Ответ сервера в HTTPie</h2>
+                    <p class="instruction reveal">Кнопка Send отправляет запрос. Справа проверяем статус 200 OK и тело Hello World!</p>
+                    <figure class="reveal response"><img src="screenshots/httpie-response-detail.png" alt="Коллекция ITHUB, запрос Привет мир и кнопка Send"><img src="screenshots/httpie-response-body.png" alt="Крупно: HTTP 200 OK и тело Hello World!"></figure>
+                    <p class="caption reveal">Дальше добавь в коллекцию <code>health</code>, <code>hello</code>, <code>products</code>, <code>product by id</code>, <code>filter</code>.</p>
+                </div><span class="page">33</span>
             </section>
 
             <!-- 24 -->
@@ -763,7 +815,7 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
                 <h1 class="reveal">К концу двух пар</h1>
                 <p class="lead reveal">Пять GET. Список в памяти, без базы. Коллекция в HTTPie.</p>
                 <div class="idx">05</div>
-            </section>
+            <span class="page">34</span></section>
 
             <!-- 25 -->
             <section class="slide">
@@ -782,7 +834,7 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
                         </tbody>
                     </table>
                 </div>
-                <span class="page">25</span>
+                <span class="page">35</span>
             </section>
 
             <!-- 26 -->
@@ -799,7 +851,7 @@ println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span><
 )</pre>
                     <p class="lead reveal" style="margin-top:20px">Базы нет. filter и firstOrNull — та логика, которую хочу увидеть.</p>
                 </div>
-                <span class="page">26</span>
+                <span class="page">36</span>
             </section>
 
             <!-- 27 -->
@@ -815,7 +867,7 @@ curl http://127.0.0.1:8080/products/2
 curl http://127.0.0.1:8080/products/99
 curl <span class="str">"http://127.0.0.1:8080/products?maxPrice=100"</span></pre>
                 </div>
-                <span class="page">27</span>
+                <span class="page">37</span>
             </section>
 
             <!-- 28 -->
@@ -832,7 +884,7 @@ curl <span class="str">"http://127.0.0.1:8080/products?maxPrice=100"</span></pre
                         <li class="reveal">В HTTPie своя коллекция, все пять запросов сохраняются и проходят Send.</li>
                     </ul>
                 </div>
-                <span class="page">28</span>
+                <span class="page">38</span>
             </section>
 
             <!-- 29 -->
@@ -841,7 +893,7 @@ curl <span class="str">"http://127.0.0.1:8080/products?maxPrice=100"</span></pre
                 <p class="kicker reveal">Завтра</p>
                 <h1 class="reveal" style="font-size:68px">Пять GET — на двух парах.<br>Не успел — доделать дома.<br>Логин GitHub — в канал.</h1>
                 <p class="sub reveal">Ссылку на канал дам на паре. Там же репа и список заданий на выбор.</p>
-                <span class="page">29</span>
+                <span class="page">39</span>
             </section>
 
         </main>
@@ -866,7 +918,9 @@ curl <span class="str">"http://127.0.0.1:8080/products?maxPrice=100"</span></pre
                 this.setupWheel();
                 document.getElementById("prevBtn").onclick = () => this.showSlide(this.currentSlide - 1);
                 document.getElementById("nextBtn").onclick = () => this.showSlide(this.currentSlide + 1);
-                this.showSlide(0);
+                const requested = window.location.hash.slice(1);
+                const found = Array.from(this.slides).findIndex((slide, i) => (slide.id || `slide-${i + 1}`) === requested);
+                this.showSlide(found >= 0 ? found : 0);
             }
             setupStageScale() {
                 const scale = () => {
@@ -921,6 +975,8 @@ curl <span class="str">"http://127.0.0.1:8080/products?maxPrice=100"</span></pre
                     slide.classList.toggle("visible", i === this.currentSlide);
                 });
                 this.counter.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+                const slide = this.slides[this.currentSlide];
+                history.replaceState(null, "", slide.id ? `#${slide.id}` : `#slide-${this.currentSlide + 1}`);
             }
         }
 
