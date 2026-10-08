@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kotlin и первый API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* === THEME: IntelliJ workshop === */
+        :root {
+            --stage-bg: #0c0d0f;
+            --slide-bg: #16171a;
+            --panel: #1e1f24;
+            --line: #2e3038;
+            --text: #e8e6e1;
+            --muted: #8b8d97;
+            --accent: #e8a87c;
+            --kotlin: #7f52ff;
+            --ok: #6aab73;
+            --font-display: "Sora", sans-serif;
+            --font-body: "IBM Plex Sans", sans-serif;
+            --font-mono: "IBM Plex Mono", monospace;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.55s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ===========================================
+           FIXED 16:9 STAGE: MANDATORY BASE STYLES
+           =========================================== */
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+        .deck-viewport {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+        .deck-stage {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            transform-origin: 0 0;
+            background: var(--slide-bg, #fff);
+        }
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            display: block;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            background: var(--slide-bg);
+            color: var(--text);
+            font-family: var(--font-body);
+        }
+        .slide.active,
+        .slide.visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+        }
+        img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+        .deck-controls {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        @media print {
+            html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+            .deck-viewport { position: static; overflow: visible; background: #fff; }
+            .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+            .slide {
+                position: relative;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                width: 1920px;
+                height: 1080px;
+                break-after: page;
+                page-break-after: always;
+            }
+            .slide:last-child { break-after: auto; page-break-after: auto; }
+            .deck-controls { display: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+
+        /* === SLIDE CHROME === */
+        .gutter {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 14px;
+            background: var(--accent);
+        }
+        .slide.sec-kotlin .gutter { background: var(--kotlin); }
+        .slide.sec-run .gutter { background: var(--ok); }
+        .kicker {
+            position: absolute;
+            top: 56px;
+            left: 96px;
+            font-family: var(--font-mono);
+            font-size: 22px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+        .page {
+            position: absolute;
+            right: 72px;
+            bottom: 72px;
+            font-family: var(--font-mono);
+            font-size: 22px;
+            color: var(--muted);
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 92px;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+        }
+        h2 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 64px;
+            line-height: 1.12;
+            letter-spacing: -0.03em;
+            max-width: 1600px;
+        }
+        .lead {
+            font-size: 34px;
+            line-height: 1.4;
+            color: var(--muted);
+            max-width: 1400px;
+        }
+        .pad { position: absolute; left: 96px; right: 96px; top: 140px; bottom: 88px; }
+        .pad-tight { top: 168px; }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+        .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+        .slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+        .slide.visible .reveal:nth-child(2) { transition-delay: 0.12s; }
+        .slide.visible .reveal:nth-child(3) { transition-delay: 0.19s; }
+        .slide.visible .reveal:nth-child(4) { transition-delay: 0.26s; }
+        .slide.visible .reveal:nth-child(5) { transition-delay: 0.33s; }
+        .slide.visible .reveal:nth-child(6) { transition-delay: 0.4s; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 36px 40px;
+        }
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        .card p, .card li { font-size: 26px; line-height: 1.4; color: var(--muted); }
+        .card a { color: var(--accent); text-decoration: none; }
+        ul.plain { list-style: none; }
+        ul.plain li {
+            font-size: 32px;
+            line-height: 1.45;
+            padding: 10px 0 10px 36px;
+            position: relative;
+        }
+        ul.plain li::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 24px;
+            width: 14px; height: 14px;
+            background: var(--accent);
+        }
+        code, .mono { font-family: var(--font-mono); }
+        pre {
+            font-family: var(--font-mono);
+            font-size: 26px;
+            line-height: 1.45;
+            background: #0e0f12;
+            border: 1px solid var(--line);
+            padding: 32px 36px;
+            color: #d7d5cf;
+            overflow: hidden;
+        }
+        .kw { color: #cf8e6d; }
+        .fn { color: #56a8f5; }
+        .str { color: #6aab73; }
+        .cmt { color: #6f737a; }
+        .num { color: #2aacb8; }
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 20px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #0c0d0f;
+            background: var(--accent);
+            padding: 6px 14px;
+        }
+        .big-num {
+            font-family: var(--font-display);
+            font-size: 180px;
+            font-weight: 800;
+            line-height: 0.85;
+            letter-spacing: -0.06em;
+            color: var(--accent);
+        }
+        .title-slide { background:
+            radial-gradient(900px 500px at 110% -10%, rgba(127,82,255,0.22), transparent 60%),
+            radial-gradient(700px 400px at -10% 110%, rgba(232,168,124,0.12), transparent 55%),
+            var(--slide-bg);
+        }
+        .title-slide h1 { position: absolute; left: 96px; top: 280px; max-width: 1500px; font-size: 108px; }
+        .title-slide .sub { position: absolute; left: 96px; top: 700px; font-size: 32px; color: var(--muted); max-width: 1200px; }
+        .div-slide { background: #121318; }
+        .div-slide .idx {
+            font-family: var(--font-display);
+            font-size: 220px;
+            font-weight: 800;
+            color: rgba(232,168,124,0.16);
+            position: absolute;
+            right: 80px;
+            bottom: 40px;
+            line-height: 1;
+        }
+        .div-slide h1 { position: absolute; left: 96px; top: 380px; }
+        .div-slide .lead { position: absolute; left: 96px; top: 560px; }
+        .url {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            color: var(--accent);
+            word-break: break-all;
+        }
+        table.spec {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 28px;
+        }
+        table.spec th, table.spec td {
+            text-align: left;
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+        }
+        table.spec th { color: var(--muted); font-weight: 500; font-size: 22px; text-transform: uppercase; letter-spacing: 0.08em; }
+        table.spec td.mono { font-family: var(--font-mono); font-size: 26px; color: var(--accent); }
+
+        .deck-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #bbb;
+            background: rgba(12,13,15,0.72);
+            padding: 8px 16px;
+            border: 1px solid #333;
+        }
+        .deck-controls button {
+            background: transparent;
+            color: #ddd;
+            border: 1px solid #444;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+        .edit-toggle {
+            position: fixed; top: 16px; left: 16px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            background: #222; color: #eee; border: 1px solid #555;
+            padding: 8px 12px; cursor: pointer; font-family: var(--font-mono);
+        }
+        .edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+        [contenteditable="true"] { outline: 1px dashed var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="edit-hotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">правка</button>
+
+    <div class="deck-viewport">
+        <main class="deck-stage" id="deckStage">
+
+            <!-- 1 -->
+            <section class="slide title-slide active">
+                <div class="gutter"></div>
+                <p class="kicker reveal">ИТхаб</p>
+                <h1 class="reveal">Kotlin, Ktor<br>и первый API</h1>
+                <span class="page">01</span>
+            </section>
+
+            <!-- 3 -->
+            <section class="slide div-slide">
+                <div class="gutter"></div>
+                <p class="kicker">01</p>
+                <h1 class="reveal">Что поставить</h1>
+                <p class="lead reveal">Git, IntelliJ IDEA, JDK, curl, HTTPie. Docker сегодня не нужен.</p>
+                <div class="idx">01</div>
+            </section>
+
+            <!-- 4 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Софт</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:32px">Что должно быть на машине</h2>
+                    <div class="grid-2">
+                        <div class="card reveal">
+                            <h3>JDK 21</h3>
+                            <p>Идёт вместе с IntelliJ. Отдельно — Temurin 21.</p>
+                            <p class="url" style="margin-top:14px">adoptium.net</p>
+                        </div>
+                        <div class="card reveal">
+                            <h3>IntelliJ IDEA Community</h3>
+                            <p>Бесплатная. Ultimate не обязателен.</p>
+                            <p class="url" style="margin-top:14px">jetbrains.com/idea/download</p>
+                        </div>
+                        <div class="card reveal">
+                            <h3>Git + GitHub</h3>
+                            <p>Клиент Git и аккаунт. Логин напишешь мне.</p>
+                            <p class="url" style="margin-top:14px">git-scm.com/downloads · github.com/signup</p>
+                        </div>
+                        <div class="card reveal">
+                            <h3>curl + HTTPie</h3>
+                            <p>curl — терминал. HTTPie Desktop — коллекции, бесплатно, без VPN.</p>
+                            <p class="url" style="margin-top:14px">httpie.io/download</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page">02</span>
+            </section>
+
+            <!-- 5 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Софт</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">IntelliJ IDEA Community</h2>
+                    <ul class="plain">
+                        <li class="reveal">Сайт: <span class="mono" style="color:var(--accent)">jetbrains.com/idea/download</span></li>
+                        <li class="reveal">Вкладка Community, не Ultimate. Windows / macOS / Linux.</li>
+                        <li class="reveal">При установке оставь галку про JDK — 21 подтянется сам.</li>
+                        <li class="reveal">Плагин Ktor можно поставить из Marketplace позже, сегодня хватит мастера проекта.</li>
+                    </ul>
+                </div>
+                <span class="page">03</span>
+            </section>
+
+            <!-- 6 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Софт</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Git</h2>
+                    <ul class="plain">
+                        <li class="reveal">Скачать: <span class="mono" style="color:var(--accent)">git-scm.com/downloads</span></li>
+                        <li class="reveal">После установки в терминале: <span class="mono">git --version</span></li>
+                        <li class="reveal">Аккаунт GitHub: <span class="mono" style="color:var(--accent)">github.com/signup</span></li>
+                        <li class="reveal">Логин пришли мне сегодня или к среде — добавлю в репу курса.</li>
+                    </ul>
+                </div>
+                <span class="page">04</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Софт</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">curl — запрос из терминала</h2>
+                    <ul class="plain">
+                        <li class="reveal">Консольная утилита. Один вызов — сразу статус и тело ответа.</li>
+                        <li class="reveal">macOS и Linux уже есть. Windows: терминал IDEA или Git Bash, проверка: <span class="mono">curl --version</span></li>
+                        <li class="reveal">Быстро ткнуть API и скинуть команду в чат: <span class="mono">curl -i http://127.0.0.1:8080/</span></li>
+                        <li class="reveal">HTTPie не заменяет: curl — на ходу, HTTPie — коллекция на весь курс.</li>
+                    </ul>
+                </div>
+                <span class="page">05</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Софт</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">HTTPie Desktop</h2>
+                    <ul class="plain">
+                        <li class="reveal">Скачать: <span class="mono" style="color:var(--accent)">httpie.io/download</span></li>
+                        <li class="reveal">Бесплатный. Работает без VPN, аккаунт не обязателен.</li>
+                        <li class="reveal">Весь курс API проверяем отсюда, не из браузера.</li>
+                        <li class="reveal">У каждого своя коллекция под свой API. Сегодня заведём первую.</li>
+                    </ul>
+                </div>
+                <span class="page">06</span>
+            </section>
+
+            <!-- 7 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Софт</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:36px">Docker сегодня не ставим</h2>
+                    <div class="grid-2">
+                        <div class="card reveal">
+                            <h3>Зачем он вообще</h3>
+                            <p>Позже поднимем PostgreSQL одной командой. На итоговом проекте — упаковать сервер.</p>
+                        </div>
+                        <div class="card reveal">
+                            <h3>Почему не сейчас</h3>
+                            <p>Первый API крутится в IDEA на localhost. База и деплой — с занятия про Exposed, не раньше 16.10.</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page">07</span>
+            </section>
+
+            <!-- 8 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Курс</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:32px">Как устроен курс</h2>
+                    <ul class="plain">
+                        <li class="reveal">Одна приватная репа на всех. У каждого ветка <span class="mono">students/логин</span></li>
+                        <li class="reveal">Проект на выбор: магазин, трекер, заметки… стек у всех один.</li>
+                        <li class="reveal">Цель к концу курса — мини-API под выбранный проект. Сегодня поднимаем сервер.</li>
+                    </ul>
+                </div>
+                <span class="page">08</span>
+            </section>
+
+            <!-- 9 -->
+            <section class="slide div-slide sec-kotlin">
+                <div class="gutter"></div>
+                <p class="kicker">02</p>
+                <h1 class="reveal">Зачем Kotlin</h1>
+                <p class="lead reveal">Коротко история и почему в названии курса «мультиплатформа».</p>
+                <div class="idx">02</div>
+            </section>
+
+            <!-- 10 -->
+            <section class="slide sec-kotlin">
+                <div class="gutter"></div>
+                <p class="kicker">Kotlin</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:40px">Откуда взялся</h2>
+                    <div class="grid-3">
+                        <div class="card reveal"><h3>2011</h3><p>JetBrains начинает язык под JVM. Имя — остров Котлин под Петербургом.</p></div>
+                        <div class="card reveal"><h3>2016–17</h3><p>Kotlin 1.0. Google объявляет его языком Android.</p></div>
+                        <div class="card reveal"><h3>Сейчас</h3><p>Один язык: Android, бэкенд, частично iOS и веб. Мы берём бэкенд.</p></div>
+                    </div>
+                </div>
+                <span class="page">09</span>
+            </section>
+
+            <!-- 11 -->
+            <section class="slide sec-kotlin">
+                <div class="gutter"></div>
+                <p class="kicker">Kotlin</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Почему не «ещё одна Java»</h2>
+                    <ul class="plain">
+                        <li class="reveal">Null в типе: <span class="mono">String?</span> — компилятор ловит NPE до запуска.</li>
+                        <li class="reveal">Меньше бойлерплейта: data class вместо геттеров на полстраницы.</li>
+                        <li class="reveal">Живёт на той же JVM: библиотеки Java подключаются как есть.</li>
+                        <li class="reveal">Корутины — асинхронность без колбэк-ада.</li>
+                    </ul>
+                </div>
+                <span class="page">10</span>
+            </section>
+
+            <!-- 12 -->
+            <section class="slide sec-kotlin">
+                <div class="gutter"></div>
+                <p class="kicker">Kotlin</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Почему «мультиплатформа»</h2>
+                    <p class="lead reveal" style="margin-bottom:36px;color:var(--text)">Kotlin Multiplatform — один язык, несколько целей компиляции. Общие модели и клиент. Нативный UI можно оставить платформенным.</p>
+                    <div class="card reveal">
+                        <h3>Что делаем мы</h3>
+                        <p>Бэкенд на Ktor, JVM. Это тот же Kotlin. Android и iOS в этом коротком курсе не пишем — не влезем за 10 пар. Язык тот же, если пойдёте в мобилку.</p>
+                    </div>
+                </div>
+                <span class="page">11</span>
+            </section>
+
+            <!-- 13 -->
+            <section class="slide div-slide">
+                <div class="gutter"></div>
+                <p class="kicker">03</p>
+                <h1 class="reveal">Основы языка</h1>
+                <p class="lead reveal">типы, val, null, функции, class, data class, коллекции, when.</p>
+                <div class="idx">03</div>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">Типы</h2>
+                    <pre class="reveal"><span class="kw">val</span> age: Int = <span class="num">20</span>
+<span class="kw">val</span> price: Double = <span class="num">99.5</span>
+<span class="kw">val</span> ok: Boolean = <span class="kw">true</span>
+<span class="kw">val</span> title: String = <span class="str">"Чай"</span>
+
+<span class="kw">val</span> count = <span class="num">10</span>    <span class="cmt">// тип не пишем — компилятор сам видит Int</span></pre>
+                    <p class="lead reveal" style="margin-top:24px">Тип после двоеточия, с большой буквы: <span class="mono">Int</span>, <span class="mono">String</span>, <span class="mono">Boolean</span>. Можно не писать, если справа очевидно.</p>
+                </div>
+                <span class="page">12</span>
+            </section>
+
+            <!-- 14 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">val и var</h2>
+                    <pre class="reveal"><span class="cmt">// один раз присвоили — больше не меняем</span>
+<span class="kw">val</span> pi = <span class="num">3.14</span>
+
+<span class="cmt">// можно переприсвоить</span>
+<span class="kw">var</span> count = <span class="num">10</span>
+count += <span class="num">5</span>
+
+<span class="kw">val</span> message: String = <span class="str">"Hello, Kotlin"</span></pre>
+                </div>
+                <span class="page">13</span>
+            </section>
+
+            <!-- 15 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">Null — часть типа</h2>
+                    <pre class="reveal"><span class="kw">val</span> name: String = <span class="str">"Марк"</span>      <span class="cmt">// null не пройдёт</span>
+<span class="kw">val</span> nick: String? = <span class="kw">null</span>        <span class="cmt">// так можно</span>
+
+<span class="kw">val</span> len = nick?.length ?: <span class="num">0</span>     <span class="cmt">// безопасный вызов + Elvis</span></pre>
+                    <p class="lead reveal" style="margin-top:28px">Вопрос <span class="mono">?</span> на типе. Без него компилятор не пустит null.</p>
+                </div>
+                <span class="page">14</span>
+            </section>
+
+            <!-- 16 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">Функции</h2>
+                    <pre class="reveal"><span class="kw">fun</span> <span class="fn">greet</span>(name: String): String {
+    <span class="kw">return</span> <span class="str">"Привет, $name"</span>
+}
+
+<span class="kw">fun</span> <span class="fn">sum</span>(a: Int, b: Int) = a + b   <span class="cmt">// коротко, тип сам</span></pre>
+                </div>
+                <span class="page">15</span>
+            </section>
+
+            <!-- 17 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">class</h2>
+                    <pre class="reveal"><span class="kw">class</span> Counter(<span class="kw">var</span> value: Int = <span class="num">0</span>) {
+    <span class="kw">fun</span> <span class="fn">inc</span>() {
+        value += <span class="num">1</span>
+    }
+}
+
+<span class="kw">val</span> c = Counter()
+c.inc()
+println(c.value)   <span class="cmt">// 1</span></pre>
+                    <p class="lead reveal" style="margin-top:20px">Обычный класс — поведение и состояние. Поля можно сразу в конструкторе: <span class="mono">class User(val name: String)</span>.</p>
+                </div>
+                <span class="page">16</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">Data class</h2>
+                    <pre class="reveal"><span class="kw">data class</span> Product(
+    <span class="kw">val</span> id: Int,
+    <span class="kw">val</span> name: String,
+    <span class="kw">val</span> price: Int
+)
+
+<span class="kw">val</span> tea = Product(<span class="num">1</span>, <span class="str">"Чай"</span>, <span class="num">90</span>)
+println(tea)   <span class="cmt">// Product(id=1, name=Чай, price=90)</span></pre>
+                    <p class="lead reveal" style="margin-top:24px">Частный случай class для данных. equals, hashCode, copy, toString — сами. JSON-модели — отсюда.</p>
+                </div>
+                <span class="page">17</span>
+            </section>
+
+            <!-- 18 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">Коллекции</h2>
+                    <pre class="reveal"><span class="kw">val</span> items = <span class="fn">listOf</span>(
+    Product(<span class="num">1</span>, <span class="str">"Чай"</span>, <span class="num">90</span>),
+    Product(<span class="num">2</span>, <span class="str">"Кофе"</span>, <span class="num">150</span>),
+    Product(<span class="num">3</span>, <span class="str">"Какао"</span>, <span class="num">120</span>)
+)
+
+<span class="kw">val</span> cheap = items.filter { it.price &lt; <span class="num">130</span> }
+<span class="kw">val</span> names = items.map { it.name }</pre>
+                </div>
+                <span class="page">18</span>
+            </section>
+
+            <!-- 19 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Основы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:24px">when</h2>
+                    <pre class="reveal"><span class="kw">fun</span> <span class="fn">label</span>(price: Int) = <span class="kw">when</span> {
+    price &lt; <span class="num">100</span>  -&gt; <span class="str">"дешёвый"</span>
+    price &lt; <span class="num">200</span>  -&gt; <span class="str">"средний"</span>
+    <span class="kw">else</span>         -&gt; <span class="str">"дорогой"</span>
+}</pre>
+                    <p class="lead reveal" style="margin-top:28px">Это if-else, который возвращает значение. Удобно в обработчике запроса.</p>
+                </div>
+                <span class="page">19</span>
+            </section>
+
+            <!-- 20 -->
+            <section class="slide div-slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">04</p>
+                <h1 class="reveal">Первый проект</h1>
+                <p class="lead reveal">Ktor в IDEA, сервер на 8080, Hello World в браузере.</p>
+                <div class="idx">04</div>
+            </section>
+
+            <!-- 21 -->
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">Запуск</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Новый проект в IDEA</h2>
+                    <ul class="plain">
+                        <li class="reveal">New Project → Ktor. Если мастера нет — Gradle / Kotlin JVM, добавим зависимость руками.</li>
+                        <li class="reveal">Engine: Netty. Plugin: Routing. Больше ничего не включай.</li>
+                        <li class="reveal">JDK 21. Имя модуля любое, например <span class="mono">shop</span>.</li>
+                    </ul>
+                </div>
+                <span class="page">20</span>
+            </section>
+
+            <!-- 22 -->
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">Запуск</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">Hello World</h2>
+                    <pre class="reveal" style="font-size:24px"><span class="kw">fun</span> <span class="fn">main</span>() {
+    embeddedServer(Netty, port = <span class="num">8080</span>) {
+        routing {
+            get(<span class="str">"/"</span>) {
+                call.respondText(<span class="str">"Hello, Ktor"</span>)
+            }
+        }
+    }.start(wait = <span class="kw">true</span>)
+}</pre>
+                </div>
+                <span class="page">21</span>
+            </section>
+
+            <!-- 23 -->
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">Запуск</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:20px">Проверка</h2>
+                    <ul class="plain">
+                        <li class="reveal">Run в IDEA. В логе: <span class="mono">Application started in …</span></li>
+                        <li class="reveal">Браузер: <span class="mono">http://127.0.0.1:8080/</span> — строка Hello, Ktor</li>
+                    </ul>
+                    <pre class="reveal" style="font-size:28px;margin-top:28px">curl -v http://127.0.0.1:8080/</pre>
+                    <p class="lead reveal" style="margin-top:20px"><span class="mono">-v</span> — видно запрос, статус, заголовки. Потом поменяй текст на «Привет, мир» и проверь ещё раз.</p>
+                </div>
+                <span class="page">22</span>
+            </section>
+
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">Запросы</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:36px">curl и HTTPie</h2>
+                    <div class="grid-2">
+                        <div class="card reveal">
+                            <h3>curl — консоль</h3>
+                            <p>Одна команда, видно статус и тело. Удобно быстро ткнуть и вставить в чат. На Windows — Git Bash или терминал IDEA.</p>
+                        </div>
+                        <div class="card reveal">
+                            <h3>HTTPie — рабочее место</h3>
+                            <p>Сохраняем запросы, заголовки, тело. История не пропадает. Дальше по курсу живём здесь: POST, JWT, файлы.</p>
+                        </div>
+                    </div>
+                </div>
+                <span class="page">23</span>
+            </section>
+
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">Запросы</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Своя коллекция</h2>
+                    <ul class="plain">
+                        <li class="reveal">New → Collection. Имя — как домен API. Сегодня: <span class="mono">shop</span>.</li>
+                        <li class="reveal">Внутри папки запросы: <span class="mono">health</span>, <span class="mono">hello</span>, <span class="mono">products</span>, <span class="mono">product by id</span>, <span class="mono">filter</span>.</li>
+                        <li class="reveal">Base URL: <span class="mono">http://127.0.0.1:8080</span>. Потом сменишь на прод, запросы останутся.</li>
+                        <li class="reveal">Коллекцию не шарим на всех: у каждого свой API и свой набор.</li>
+                    </ul>
+                </div>
+                <span class="page">24</span>
+            </section>
+
+            <!-- 24 -->
+            <section class="slide div-slide">
+                <div class="gutter"></div>
+                <p class="kicker">05</p>
+                <h1 class="reveal">К концу двух пар</h1>
+                <p class="lead reveal">Пять GET. Список в памяти, без базы. Коллекция в HTTPie.</p>
+                <div class="idx">05</div>
+            </section>
+
+            <!-- 25 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Задание</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">Сервер на :8080 отвечает так</h2>
+                    <table class="spec reveal">
+                        <thead><tr><th>Запрос</th><th>Что делает</th></tr></thead>
+                        <tbody>
+                            <tr><td class="mono">GET /</td><td>JSON <span class="mono">{"ok": true}</span></td></tr>
+                            <tr><td class="mono">GET /hello/{name}</td><td><span class="mono">{"message": "Привет, Марк"}</span></td></tr>
+                            <tr><td class="mono">GET /products</td><td>Список из 4 товаров: id, name, price</td></tr>
+                            <tr><td class="mono">GET /products/{id}</td><td>Один товар. Нет такого id — 404</td></tr>
+                            <tr><td class="mono">GET /products?maxPrice=100</td><td>Только товары не дороже 100</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <span class="page">25</span>
+            </section>
+
+            <!-- 26 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Задание</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">Товары захардкодь списком</h2>
+                    <pre class="reveal" style="font-size:24px"><span class="kw">val</span> products = <span class="fn">listOf</span>(
+    Product(<span class="num">1</span>, <span class="str">"Чай"</span>, <span class="num">90</span>),
+    Product(<span class="num">2</span>, <span class="str">"Кофе"</span>, <span class="num">150</span>),
+    Product(<span class="num">3</span>, <span class="str">"Какао"</span>, <span class="num">120</span>),
+    Product(<span class="num">4</span>, <span class="str">"Вода"</span>, <span class="num">40</span>)
+)</pre>
+                    <p class="lead reveal" style="margin-top:20px">Базы нет. filter и firstOrNull — та логика, которую хочу увидеть.</p>
+                </div>
+                <span class="page">26</span>
+            </section>
+
+            <!-- 27 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Задание</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">Те же запросы в curl</h2>
+                    <pre class="reveal" style="font-size:24px">curl http://127.0.0.1:8080/
+curl http://127.0.0.1:8080/hello/Анна
+curl http://127.0.0.1:8080/products
+curl http://127.0.0.1:8080/products/2
+curl http://127.0.0.1:8080/products/99
+curl <span class="str">"http://127.0.0.1:8080/products?maxPrice=100"</span></pre>
+                </div>
+                <span class="page">27</span>
+            </section>
+
+            <!-- 28 -->
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Задание</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Считается сделанным, если</h2>
+                    <ul class="plain">
+                        <li class="reveal">Сервер стартует из IDEA без красного стектрейса.</li>
+                        <li class="reveal">Все пять маршрутов отвечают. 99-й товар даёт 404, не пустой 200.</li>
+                        <li class="reveal">Фильтр <span class="mono">maxPrice</span> реально режет список, не игнорируется.</li>
+                        <li class="reveal">Ответы JSON, не голый текст — кроме отладки на старте.</li>
+                        <li class="reveal">В HTTPie своя коллекция, все пять запросов сохраняются и проходят Send.</li>
+                    </ul>
+                </div>
+                <span class="page">28</span>
+            </section>
+
+            <!-- 29 -->
+            <section class="slide title-slide">
+                <div class="gutter"></div>
+                <p class="kicker reveal">Завтра</p>
+                <h1 class="reveal" style="font-size:68px">Пять GET — на двух парах.<br>Не успел — доделать дома.<br>Логин GitHub — в канал.</h1>
+                <p class="sub reveal">Ссылку на канал дам на паре. Там же репа и список заданий на выбор.</p>
+                <span class="page">29</span>
+            </section>
+
+        </main>
+    </div>
+
+    <div class="deck-controls" id="controls">
+        <button type="button" id="prevBtn">←</button>
+        <span id="counter">1 / 1</span>
+        <button type="button" id="nextBtn">→</button>
+    </div>
+
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll(".slide");
+                this.currentSlide = 0;
+                this.stage = document.getElementById("deckStage");
+                this.counter = document.getElementById("counter");
+                this.setupStageScale();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheel();
+                document.getElementById("prevBtn").onclick = () => this.showSlide(this.currentSlide - 1);
+                document.getElementById("nextBtn").onclick = () => this.showSlide(this.currentSlide + 1);
+                this.showSlide(0);
+            }
+            setupStageScale() {
+                const scale = () => {
+                    const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+                    const x = (window.innerWidth - 1920 * factor) / 2;
+                    const y = (window.innerHeight - 1080 * factor) / 2;
+                    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+                };
+                scale();
+                window.addEventListener("resize", scale);
+            }
+            setupKeyboardNav() {
+                document.addEventListener("keydown", (e) => {
+                    if (e.target.getAttribute("contenteditable")) return;
+                    if (["ArrowRight", " ", "PageDown"].includes(e.key)) {
+                        e.preventDefault();
+                        this.showSlide(this.currentSlide + 1);
+                    }
+                    if (["ArrowLeft", "PageUp"].includes(e.key)) {
+                        e.preventDefault();
+                        this.showSlide(this.currentSlide - 1);
+                    }
+                    if (e.key === "Home") this.showSlide(0);
+                    if (e.key === "End") this.showSlide(this.slides.length - 1);
+                });
+            }
+            setupTouchNav() {
+                let x0 = null;
+                document.addEventListener("touchstart", (e) => { x0 = e.changedTouches[0].screenX; }, { passive: true });
+                document.addEventListener("touchend", (e) => {
+                    if (x0 === null) return;
+                    const dx = e.changedTouches[0].screenX - x0;
+                    if (dx < -40) this.showSlide(this.currentSlide + 1);
+                    if (dx > 40) this.showSlide(this.currentSlide - 1);
+                    x0 = null;
+                }, { passive: true });
+            }
+            setupWheel() {
+                let t = 0;
+                window.addEventListener("wheel", (e) => {
+                    const now = Date.now();
+                    if (now - t < 450) return;
+                    t = now;
+                    if (e.deltaY > 20) this.showSlide(this.currentSlide + 1);
+                    if (e.deltaY < -20) this.showSlide(this.currentSlide - 1);
+                }, { passive: true });
+            }
+            showSlide(index) {
+                this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+                this.slides.forEach((slide, i) => {
+                    slide.classList.toggle("active", i === this.currentSlide);
+                    slide.classList.toggle("visible", i === this.currentSlide);
+                });
+                this.counter.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+            }
+        }
+
+        const deck = new SlidePresentation();
+
+        const editor = {
+            isActive: false,
+            toggleEditMode() {
+                this.isActive = !this.isActive;
+                document.getElementById("editToggle").classList.toggle("active", this.isActive);
+                document.querySelectorAll("h1,h2,h3,p,li,td,th,.kicker,.sub,.lead").forEach((el) => {
+                    el.setAttribute("contenteditable", this.isActive ? "true" : "false");
+                });
+            }
+        };
+
+        const hotzone = document.querySelector(".edit-hotzone");
+        const editToggle = document.getElementById("editToggle");
+        let hideTimeout = null;
+        hotzone.addEventListener("mouseenter", () => { clearTimeout(hideTimeout); editToggle.classList.add("show"); });
+        hotzone.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove("show"); }, 400);
+        });
+        editToggle.addEventListener("mouseenter", () => clearTimeout(hideTimeout));
+        editToggle.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove("show"); }, 400);
+        });
+        editToggle.addEventListener("click", () => editor.toggleEditMode());
+        hotzone.addEventListener("click", () => editor.toggleEditMode());
+        document.addEventListener("keydown", (e) => {
+            if ((e.key === "e" || e.key === "E") && !e.target.getAttribute("contenteditable")) {
+                editor.toggleEditMode();
+            }
+        });
+    </script>
+</body>
+</html>
