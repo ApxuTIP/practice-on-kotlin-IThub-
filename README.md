@@ -68,4 +68,16 @@ curl -v http://127.0.0.1:8080/
 
 ## Преза первого занятия
 
-Файл `slides/01-intro.html` — открыть в браузере. Скрины софта можно класть рядом в `slides/`.
+GitHub файл как слайды не покажет — его надо открыть у себя.
+
+```bash
+git clone git@github.com:dermanov-ru/ithub-ktor-2026.git
+```
+
+Потом в браузере: File → Open File → `slides/01-intro.html`, или из папки репы:
+
+```bash
+xdg-open slides/01-intro.html
+```
+
+На Mac: `open slides/01-intro.html`. Скрины софта можно класть рядом в `slides/`.
