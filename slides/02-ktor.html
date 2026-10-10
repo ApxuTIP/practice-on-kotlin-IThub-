@@ -349,10 +349,24 @@
                     <ul class="plain">
                         <li class="reveal">КТ1 — сервер живой, JSON, GET. Вчера это сделали. Сегодня добираем остальные методы.</li>
                         <li class="reveal">КТ2 — CRUD сущности + хранение + вход по токену.</li>
-                        <li class="reveal">Новый проект не создаём. Открываем вчерашний или <span class="mono">examples/01-hello-world</span>.</li>
+                        <li class="reveal">Новый проект не создаём. File → Open папку <span class="mono">examples/02-kt2-starter</span>.</li>
                     </ul>
                 </div>
                 <span class="page">03</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Стартер</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Открыть готовую папку</h2>
+                    <ul class="plain">
+                        <li class="reveal"><span class="mono">examples/02-kt2-starter</span> — как hello-world, уже JSON и пустой список.</li>
+                        <li class="reveal">File → Open именно эту папку. Sync. Run. <span class="mono">GET /</span> и <span class="mono">GET /items → []</span>.</li>
+                        <li class="reveal">Куски POST/PUT/DELETE и база/логин — копируй из <span class="mono">lesson-2/</span>.</li>
+                    </ul>
+                </div>
+                <span class="page">04</span>
             </section>
 
             <section class="slide div-slide">
@@ -377,7 +391,7 @@
                         <div class="card reveal"><h3>Банк</h3><p>счёт: номер, валюта, баланс</p></div>
                     </div>
                 </div>
-                <span class="page">04</span>
+                <span class="page">05</span>
             </section>
 
             <section class="slide">
@@ -394,7 +408,7 @@
 )</pre>
                     <p class="lead reveal" style="margin-top:20px">Не Product — свой тип: Film, Ad, Recipe, MenuItem, Account, FileItem. Полей минимум три плюс id.</p>
                 </div>
-                <span class="page">05</span>
+                <span class="page">06</span>
             </section>
 
             <section class="slide">
@@ -414,7 +428,7 @@
                         </tbody>
                     </table>
                 </div>
-                <span class="page">06</span>
+                <span class="page">07</span>
             </section>
 
             <section class="slide">
@@ -422,13 +436,73 @@
                 <p class="kicker">Память</p>
                 <div class="pad pad-tight">
                     <h2 class="reveal" style="margin-bottom:20px">Склад пока — список</h2>
-                    <pre class="reveal"><span class="kw">val</span> items = <span class="fn">mutableListOf</span>&lt;Product&gt;(
-    Product(<span class="num">1</span>, <span class="str">"Чай"</span>, <span class="num">90</span>, <span class="str">"drink"</span>),
-    Product(<span class="num">2</span>, <span class="str">"Кофе"</span>, <span class="num">150</span>, <span class="str">"drink"</span>)
-)</pre>
-                    <p class="lead reveal" style="margin-top:24px">Перезапустил сервер — список снова стартовый. Это нормально для части 1.</p>
+                    <pre class="reveal"><span class="kw">val</span> items = <span class="fn">mutableListOf</span>&lt;Item&gt;()
+<span class="kw">var</span> nextId = <span class="num">1</span></pre>
+                    <p class="lead reveal" style="margin-top:24px">В стартере список пустой. Перезапуск стирает то, что насоздавали POST-ом. Это нормально для части 1.</p>
                 </div>
-                <span class="page">07</span>
+                <span class="page">08</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Код</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">GET список и карточка</h2>
+                    <pre class="reveal" style="font-size:20px">get(<span class="str">"/items"</span>) {
+    <span class="kw">val</span> category = call.request.queryParameters[<span class="str">"category"</span>]
+    <span class="kw">val</span> result = <span class="kw">if</span> (category.isNullOrBlank()) items
+                 <span class="kw">else</span> items.filter { it.category == category }
+    call.respond(result)
+}
+get(<span class="str">"/items/{id}"</span>) {
+    <span class="kw">val</span> id = call.parameters[<span class="str">"id"</span>]?.toIntOrNull()
+        ?: <span class="kw">return@get</span> call.respond(HttpStatusCode.BadRequest, ErrorBody(<span class="str">"id"</span>))
+    <span class="kw">val</span> item = items.find { it.id == id }
+        ?: <span class="kw">return@get</span> call.respond(HttpStatusCode.NotFound, ErrorBody(<span class="str">"not found"</span>))
+    call.respond(item)
+}</pre>
+                </div>
+                <span class="page">09</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Код</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">POST создать</h2>
+                    <pre class="reveal" style="font-size:22px"><span class="kw">@Serializable</span>
+<span class="kw">data class</span> ItemDraft(<span class="kw">val</span> name: String, <span class="kw">val</span> price: Int, <span class="kw">val</span> category: String)
+
+post(<span class="str">"/items"</span>) {
+    <span class="kw">val</span> draft = call.receive&lt;ItemDraft&gt;()
+    <span class="kw">val</span> created = Item(nextId++, draft.name, draft.price, draft.category)
+    items += created
+    call.respond(HttpStatusCode.Created, created)
+}</pre>
+                </div>
+                <span class="page">10</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Код</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">PUT и DELETE</h2>
+                    <pre class="reveal" style="font-size:20px">put(<span class="str">"/items/{id}"</span>) {
+    <span class="kw">val</span> id = call.parameters[<span class="str">"id"</span>]?.toIntOrNull() ?: <span class="kw">return@put</span> …
+    <span class="kw">val</span> draft = call.receive&lt;ItemDraft&gt;()
+    <span class="kw">val</span> index = items.indexOfFirst { it.id == id }
+    <span class="kw">if</span> (index &lt; 0) <span class="kw">return@put</span> call.respond(HttpStatusCode.NotFound, …)
+    items[index] = Item(id, draft.name, draft.price, draft.category)
+    call.respond(items[index])
+}
+delete(<span class="str">"/items/{id}"</span>) {
+    <span class="kw">val</span> id = call.parameters[<span class="str">"id"</span>]?.toIntOrNull() ?: <span class="kw">return@delete</span> …
+    <span class="kw">if</span> (!items.removeIf { it.id == id }) call.respond(HttpStatusCode.NotFound, …)
+    <span class="kw">else</span> call.respond(HttpStatusCode.NoContent)
+}</pre>
+                </div>
+                <span class="page">11</span>
             </section>
 
             <section class="slide">
@@ -445,7 +519,7 @@ dependencies {
 }</pre>
                     <p class="lead reveal" style="margin-top:20px"> Sync Gradle. Потом в коде: <span class="mono">install(ContentNegotiation) { json() }</span>.</p>
                 </div>
-                <span class="page">08</span>
+                <span class="page">12</span>
             </section>
 
             <section class="slide sec-run">
@@ -460,7 +534,7 @@ dependencies {
                         <li class="reveal">curl <span class="mono">-v</span> остаётся для быстрой проверки в терминале.</li>
                     </ul>
                 </div>
-                <span class="page">09</span>
+                <span class="page">13</span>
             </section>
 
             <section class="slide sec-run">
@@ -474,7 +548,7 @@ dependencies {
                         <li class="reveal">Коллекция в HTTPie (или Postman) проходит Send по каждому.</li>
                     </ul>
                 </div>
-                <span class="page">10</span>
+                <span class="page">14</span>
             </section>
 
             <section class="slide div-slide sec-db">
@@ -495,7 +569,7 @@ dependencies {
                         <div class="card reveal"><h3>Postgres</h3><p>Живёт в отдельном процессе. Сервер упал — записи на месте. Это уже сервис.</p></div>
                     </div>
                 </div>
-                <span class="page">11</span>
+                <span class="page">15</span>
             </section>
 
             <section class="slide sec-db">
@@ -510,7 +584,7 @@ dependencies {
   postgres:16</pre>
                     <p class="lead reveal" style="margin-top:20px">Приложение на 8080, база на 5432. Не ставим Postgres на хост руками.</p>
                 </div>
-                <span class="page">12</span>
+                <span class="page">16</span>
             </section>
 
             <section class="slide sec-db">
@@ -524,7 +598,7 @@ dependencies {
                         <li class="reveal">Нужны: <span class="mono">exposed-core</span>, <span class="mono">exposed-jdbc</span>, драйвер <span class="mono">postgresql</span>.</li>
                     </ul>
                 </div>
-                <span class="page">13</span>
+                <span class="page">17</span>
             </section>
 
             <section class="slide sec-db">
@@ -539,7 +613,7 @@ dependencies {
     <span class="kw">override val</span> primaryKey = PrimaryKey(id)
 }</pre>
                 </div>
-                <span class="page">14</span>
+                <span class="page">18</span>
             </section>
 
             <section class="slide sec-db">
@@ -558,7 +632,7 @@ transaction {
     Products.selectAll().map { /* в Product */ }
 }</pre>
                 </div>
-                <span class="page">15</span>
+                <span class="page">19</span>
             </section>
 
             <section class="slide sec-db">
@@ -572,7 +646,7 @@ transaction {
                         <li class="reveal">Контейнер не удаляем. <span class="mono">docker stop</span> / <span class="mono">start</span> — данные на месте.</li>
                     </ul>
                 </div>
-                <span class="page">16</span>
+                <span class="page">20</span>
             </section>
 
             <section class="slide div-slide sec-auth">
@@ -594,7 +668,7 @@ transaction {
                         <li class="reveal">Совпало — человек свой. Нет — 401. Сам пароль мы не храним и не логируем.</li>
                     </ul>
                 </div>
-                <span class="page">17</span>
+                <span class="page">21</span>
             </section>
 
             <section class="slide sec-auth">
@@ -608,7 +682,7 @@ transaction {
                         <li class="reveal">Подпись не бьётся или билета нет — 401. Пароль больше не шлём.</li>
                     </ul>
                 </div>
-                <span class="page">18</span>
+                <span class="page">22</span>
             </section>
 
             <section class="slide sec-auth">
@@ -624,7 +698,24 @@ GET /items
 Authorization: Bearer eyJhbGciOi…</pre>
                     <p class="lead reveal" style="margin-top:16px"><span class="mono">/register</span> и <span class="mono">/login</span> без билета. Остальное — только с ним.</p>
                 </div>
-                <span class="page">19</span>
+                <span class="page">23</span>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">JWT</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">Подключить в коде</h2>
+                    <pre class="reveal" style="font-size:20px">install(Authentication) { jwtAuth() }
+routing {
+    authRoutes()                  <span class="cmt">// /register и /login открыты</span>
+    authenticate(<span class="str">"auth-jwt"</span>) {
+        itemRoutes()              <span class="cmt">// /items только с Bearer</span>
+    }
+}</pre>
+                    <p class="lead reveal" style="margin-top:16px">Готовые функции — <span class="mono">lesson-2/03-auth/</span>.</p>
+                </div>
+                <span class="page">24</span>
             </section>
 
             <section class="slide sec-auth">
@@ -637,7 +728,7 @@ Authorization: Bearer eyJhbGciOi…</pre>
                         <div class="card reveal"><h3>остальные маршруты</h3><p>Плагин jwt проверяет подпись. Ок — пускает в handler. Нет — даже не заходит в код списка.</p></div>
                     </div>
                 </div>
-                <span class="page">20</span>
+                <span class="page">25</span>
             </section>
 
             <section class="slide sec-auth">
@@ -651,7 +742,7 @@ Authorization: Bearer eyJhbGciOi…</pre>
                         <li class="reveal">Без заголовка тот же GET /items должен дать 401 — так и проверяем.</li>
                     </ul>
                 </div>
-                <span class="page">21</span>
+                <span class="page">26</span>
             </section>
 
             <section class="slide">
@@ -665,14 +756,14 @@ Authorization: Bearer eyJhbGciOi…</pre>
                         <div class="card reveal"><h3>Пара 3</h3><p>Регистрация, логин, BCrypt, JWT на /items.</p></div>
                     </div>
                 </div>
-                <span class="page">22</span>
+                <span class="page">27</span>
             </section>
 
             <section class="slide title-slide">
                 <div class="gutter"></div>
                 <p class="kicker reveal">К вечеру</p>
                 <h1 class="reveal" style="font-size:72px">Список живёт в базе.<br>Без токена API молчит.<br>Коллекция всё это умеет.</h1>
-                <span class="page">23</span>
+                <span class="page">28</span>
             </section>
 
         </main>

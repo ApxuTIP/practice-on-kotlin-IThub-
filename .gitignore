@@ -1,0 +1,10 @@
+.gradle/
+.kotlin/
+.idea/
+build/
+*.iml
+.DS_Store
+lxp-curls.txt
+
+# готовая реализация стартового задания КТ2 — не для студентов
+examples/02-kt2-complete/

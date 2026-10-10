@@ -82,6 +82,12 @@ curl -v http://127.0.0.1:8080/
 
 Инструкция: [`materials/02-kt2/`](materials/02-kt2/) — память, Postgres в Docker, JWT.
 
+## Lesson 2
+
+- Преза: [`slides/02-ktor.html`](slides/02-ktor.html)
+- Стартер (открыть папку в IDEA): [`examples/02-kt2-starter`](examples/02-kt2-starter)
+- Опорные куски по частям: [`lesson-2/`](lesson-2/)
+
 ## Нейросети
 
 Нельзя. Код, запросы и коллекцию каждый пишет сам, руками. Сгенерированное сдать нельзя.
