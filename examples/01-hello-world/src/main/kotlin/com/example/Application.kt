@@ -12,6 +12,18 @@ fun main() {
             get("/") {
                 call.respondText("Hello World!")
             }
+            get("/hello/{name}") {
+                call.respondText ("{\"foo\" : \"bar\"}")
+            }
+            get("/products") {
+                call.respondText("Список из 4 товаров: id, name, price")
+            }
+            get("/products/{id}") {
+                call.respondText("Один товар. Нет такого id — 404")
+            }
+            get("/products?maxPrice=100") {
+                call.respondText("Только товары не дороже 100")
+            }
         }
     }.start(wait = true)
 }
