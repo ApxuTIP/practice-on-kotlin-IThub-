@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КТ2 — методы, база, логин</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* === THEME: IntelliJ workshop === */
+        :root {
+            --stage-bg: #0c0d0f;
+            --slide-bg: #16171a;
+            --panel: #1e1f24;
+            --line: #2e3038;
+            --text: #e8e6e1;
+            --muted: #8b8d97;
+            --accent: #e8a87c;
+            --kotlin: #7f52ff;
+            --ok: #6aab73;
+            --font-display: "Sora", sans-serif;
+            --font-body: "IBM Plex Sans", sans-serif;
+            --font-mono: "IBM Plex Mono", monospace;
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --duration-normal: 0.55s;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* ===========================================
+           FIXED 16:9 STAGE: MANDATORY BASE STYLES
+           =========================================== */
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+        .deck-viewport {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: var(--stage-bg, #000);
+        }
+        .deck-stage {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            transform-origin: 0 0;
+            background: var(--slide-bg, #fff);
+        }
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 1920px;
+            height: 1080px;
+            overflow: hidden;
+            display: block;
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+            background: var(--slide-bg);
+            color: var(--text);
+            font-family: var(--font-body);
+        }
+        .slide.active,
+        .slide.visible {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 1;
+        }
+        img, video, canvas, svg { max-width: 100%; max-height: 100%; }
+        .deck-controls {
+            position: fixed;
+            left: 50%;
+            bottom: 22px;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        @media print {
+            html, body { width: 1920px; height: auto; overflow: visible; background: #fff; }
+            .deck-viewport { position: static; overflow: visible; background: #fff; }
+            .deck-stage { position: static; width: auto; height: auto; transform: none !important; background: none; }
+            .slide {
+                position: relative;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                width: 1920px;
+                height: 1080px;
+                break-after: page;
+                page-break-after: always;
+            }
+            .slide:last-child { break-after: auto; page-break-after: auto; }
+            .deck-controls { display: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+
+        /* === SLIDE CHROME === */
+        .gutter {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 14px;
+            background: var(--accent);
+        }
+        .slide.sec-kotlin .gutter { background: var(--kotlin); }
+        .slide.sec-run .gutter { background: var(--ok); }
+        .slide.sec-db .gutter { background: #56a8f5; }
+        .slide.sec-auth .gutter { background: #c9a0dc; }
+        .kicker {
+            position: absolute;
+            top: 56px;
+            left: 96px;
+            font-family: var(--font-mono);
+            font-size: 22px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+        .page {
+            position: absolute;
+            right: 72px;
+            bottom: 72px;
+            font-family: var(--font-mono);
+            font-size: 22px;
+            color: var(--muted);
+        }
+        h1 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 92px;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+        }
+        h2 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 64px;
+            line-height: 1.12;
+            letter-spacing: -0.03em;
+            max-width: 1600px;
+        }
+        .lead {
+            font-size: 34px;
+            line-height: 1.4;
+            color: var(--muted);
+            max-width: 1400px;
+        }
+        .pad { position: absolute; left: 96px; right: 96px; top: 140px; bottom: 88px; }
+        .pad-tight { top: 168px; }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(22px);
+            transition: opacity var(--duration-normal) var(--ease-out-expo),
+                        transform var(--duration-normal) var(--ease-out-expo);
+        }
+        .slide.visible .reveal { opacity: 1; transform: translateY(0); }
+        .slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+        .slide.visible .reveal:nth-child(2) { transition-delay: 0.12s; }
+        .slide.visible .reveal:nth-child(3) { transition-delay: 0.19s; }
+        .slide.visible .reveal:nth-child(4) { transition-delay: 0.26s; }
+        .slide.visible .reveal:nth-child(5) { transition-delay: 0.33s; }
+        .slide.visible .reveal:nth-child(6) { transition-delay: 0.4s; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 24px; }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            padding: 36px 40px;
+        }
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        .card p, .card li { font-size: 26px; line-height: 1.4; color: var(--muted); }
+        .card a { color: var(--accent); text-decoration: none; }
+        ul.plain { list-style: none; }
+        ul.plain li {
+            font-size: 32px;
+            line-height: 1.45;
+            padding: 10px 0 10px 36px;
+            position: relative;
+        }
+        ul.plain li::before {
+            content: "";
+            position: absolute;
+            left: 0; top: 24px;
+            width: 14px; height: 14px;
+            background: var(--accent);
+        }
+        code, .mono { font-family: var(--font-mono); }
+        pre {
+            font-family: var(--font-mono);
+            font-size: 26px;
+            line-height: 1.45;
+            background: #0e0f12;
+            border: 1px solid var(--line);
+            padding: 32px 36px;
+            color: #d7d5cf;
+            overflow: hidden;
+        }
+        .kw { color: #cf8e6d; }
+        .fn { color: #56a8f5; }
+        .str { color: #6aab73; }
+        .cmt { color: #6f737a; }
+        .num { color: #2aacb8; }
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 20px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #0c0d0f;
+            background: var(--accent);
+            padding: 6px 14px;
+        }
+        .big-num {
+            font-family: var(--font-display);
+            font-size: 180px;
+            font-weight: 800;
+            line-height: 0.85;
+            letter-spacing: -0.06em;
+            color: var(--accent);
+        }
+        .title-slide { background:
+            radial-gradient(900px 500px at 110% -10%, rgba(127,82,255,0.22), transparent 60%),
+            radial-gradient(700px 400px at -10% 110%, rgba(232,168,124,0.12), transparent 55%),
+            var(--slide-bg);
+        }
+        .title-slide h1 { position: absolute; left: 96px; top: 280px; max-width: 1500px; font-size: 108px; }
+        .title-slide .sub { position: absolute; left: 96px; top: 700px; font-size: 32px; color: var(--muted); max-width: 1200px; }
+        .div-slide { background: #121318; }
+        .div-slide .idx {
+            font-family: var(--font-display);
+            font-size: 220px;
+            font-weight: 800;
+            color: rgba(232,168,124,0.16);
+            position: absolute;
+            right: 80px;
+            bottom: 40px;
+            line-height: 1;
+        }
+        .div-slide h1 { position: absolute; left: 96px; top: 380px; }
+        .div-slide .lead { position: absolute; left: 96px; top: 560px; }
+        .url {
+            font-family: var(--font-mono);
+            font-size: 24px;
+            color: var(--accent);
+            word-break: break-all;
+        }
+        table.spec {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 28px;
+        }
+        table.spec th, table.spec td {
+            text-align: left;
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--line);
+            vertical-align: top;
+        }
+        table.spec th { color: var(--muted); font-weight: 500; font-size: 22px; text-transform: uppercase; letter-spacing: 0.08em; }
+        table.spec td.mono { font-family: var(--font-mono); font-size: 26px; color: var(--accent); }
+
+        .deck-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #bbb;
+            background: rgba(12,13,15,0.72);
+            padding: 8px 16px;
+            border: 1px solid #333;
+        }
+        .deck-controls button {
+            background: transparent;
+            color: #ddd;
+            border: 1px solid #444;
+            padding: 4px 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+        .edit-toggle {
+            position: fixed; top: 16px; left: 16px;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 10001;
+            background: #222; color: #eee; border: 1px solid #555;
+            padding: 8px 12px; cursor: pointer; font-family: var(--font-mono);
+        }
+        .edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+        [contenteditable="true"] { outline: 1px dashed var(--accent); }
+    </style>
+</head>
+<body>
+    <div class="edit-hotzone"></div>
+    <button class="edit-toggle" id="editToggle" title="Edit mode (E)">правка</button>
+
+        <div class="deck-viewport">
+        <main class="deck-stage" id="deckStage">
+
+            <section class="slide title-slide active">
+                <div class="gutter"></div>
+                <p class="kicker reveal">ИТхаб · день 2 · три пары</p>
+                <h1 class="reveal">Контрольная<br>точка 2</h1>
+                <p class="sub reveal">Методы, список в памяти, Postgres, вход по токену.</p>
+                <span class="page">01</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">День</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:36px">Три части</h2>
+                    <div class="grid-3">
+                        <div class="card reveal"><h3>1. Память</h3><p>Домен, класс, CRUD на списке. Коллекция в HTTPie. Это же доделка КТ1.</p></div>
+                        <div class="card reveal"><h3>2. Диск</h3><p>То же API, данные в Postgres в Docker. Переживает перезапуск.</p></div>
+                        <div class="card reveal"><h3>3. Вход</h3><p>Пароль в BCrypt, логин отдаёт JWT, без токена API молчит.</p></div>
+                    </div>
+                </div>
+                <span class="page">02</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">КТ</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Как это стыкуется</h2>
+                    <ul class="plain">
+                        <li class="reveal">КТ1 — сервер живой, JSON, GET. Вчера это сделали. Сегодня добираем остальные методы.</li>
+                        <li class="reveal">КТ2 — CRUD сущности + хранение + вход по токену.</li>
+                        <li class="reveal">Новый проект не создаём. File → Open папку <span class="mono">examples/02-kt2-starter</span>.</li>
+                    </ul>
+                </div>
+                <span class="page">03</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Стартер</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Открыть готовую папку</h2>
+                    <ul class="plain">
+                        <li class="reveal"><span class="mono">examples/02-kt2-starter</span> — как hello-world, уже JSON и пустой список.</li>
+                        <li class="reveal">File → Open именно эту папку. Sync. Run. <span class="mono">GET /</span> и <span class="mono">GET /items → []</span>.</li>
+                        <li class="reveal">Куски POST/PUT/DELETE и база/логин — копируй из <span class="mono">lesson-2/</span>.</li>
+                    </ul>
+                </div>
+                <span class="page">04</span>
+            </section>
+
+            <section class="slide div-slide">
+                <div class="gutter"></div>
+                <p class="kicker">01</p>
+                <h1 class="reveal">Часть 1. Память</h1>
+                <p class="lead reveal">Домен, один класс, методы, список, HTTPie.</p>
+                <div class="idx">01</div>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Домен</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Выбери одну область</h2>
+                    <div class="grid-3">
+                        <div class="card reveal"><h3>Drive</h3><p>файл: имя, размер, папка</p></div>
+                        <div class="card reveal"><h3>Кинопоиск</h3><p>фильм: название, год, рейтинг</p></div>
+                        <div class="card reveal"><h3>Avito</h3><p>объявление: заголовок, цена, город</p></div>
+                        <div class="card reveal"><h3>Рецепты</h3><p>рецепт: название, время, сложность</p></div>
+                        <div class="card reveal"><h3>Макдак</h3><p>позиция: имя, цена, категория</p></div>
+                        <div class="card reveal"><h3>Банк</h3><p>счёт: номер, валюта, баланс</p></div>
+                    </div>
+                </div>
+                <span class="page">05</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Домен</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">Один класс, несколько полей</h2>
+                    <pre class="reveal"><span class="kw">@Serializable</span>
+<span class="kw">data class</span> Product(
+    <span class="kw">val</span> id: Int,
+    <span class="kw">val</span> name: String,
+    <span class="kw">val</span> price: Int,
+    <span class="kw">val</span> category: String
+)</pre>
+                    <p class="lead reveal" style="margin-top:20px">Не Product — свой тип: Film, Ad, Recipe, MenuItem, Account, FileItem. Полей минимум три плюс id.</p>
+                </div>
+                <span class="page">06</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Методы</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:16px">Что должно уметь API</h2>
+                    <table class="spec reveal">
+                        <thead><tr><th>Метод</th><th>Запрос</th><th>Смысл</th></tr></thead>
+                        <tbody>
+                            <tr><td class="mono">GET</td><td class="mono">/items</td><td>весь список</td></tr>
+                            <tr><td class="mono">GET</td><td class="mono">/items?category=tea</td><td>фильтр</td></tr>
+                            <tr><td class="mono">GET</td><td class="mono">/items/{id}</td><td>карточка, нет — 404</td></tr>
+                            <tr><td class="mono">POST</td><td class="mono">/items</td><td>создать, ответ 201</td></tr>
+                            <tr><td class="mono">PUT</td><td class="mono">/items/{id}</td><td>обновить поля</td></tr>
+                            <tr><td class="mono">DELETE</td><td class="mono">/items/{id}</td><td>удалить, 204 или 404</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <span class="page">07</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Память</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">Склад пока — список</h2>
+                    <pre class="reveal"><span class="kw">val</span> items = <span class="fn">mutableListOf</span>&lt;Item&gt;()
+<span class="kw">var</span> nextId = <span class="num">1</span></pre>
+                    <p class="lead reveal" style="margin-top:24px">В стартере список пустой. Перезапуск стирает то, что насоздавали POST-ом. Это нормально для части 1.</p>
+                </div>
+                <span class="page">08</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Код</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">GET список и карточка</h2>
+                    <pre class="reveal" style="font-size:20px">get(<span class="str">"/items"</span>) {
+    <span class="kw">val</span> category = call.request.queryParameters[<span class="str">"category"</span>]
+    <span class="kw">val</span> result = <span class="kw">if</span> (category.isNullOrBlank()) items
+                 <span class="kw">else</span> items.filter { it.category == category }
+    call.respond(result)
+}
+get(<span class="str">"/items/{id}"</span>) {
+    <span class="kw">val</span> id = call.parameters[<span class="str">"id"</span>]?.toIntOrNull()
+        ?: <span class="kw">return@get</span> call.respond(HttpStatusCode.BadRequest, ErrorBody(<span class="str">"id"</span>))
+    <span class="kw">val</span> item = items.find { it.id == id }
+        ?: <span class="kw">return@get</span> call.respond(HttpStatusCode.NotFound, ErrorBody(<span class="str">"not found"</span>))
+    call.respond(item)
+}</pre>
+                </div>
+                <span class="page">09</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Код</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">POST создать</h2>
+                    <pre class="reveal" style="font-size:22px"><span class="kw">@Serializable</span>
+<span class="kw">data class</span> ItemDraft(<span class="kw">val</span> name: String, <span class="kw">val</span> price: Int, <span class="kw">val</span> category: String)
+
+post(<span class="str">"/items"</span>) {
+    <span class="kw">val</span> draft = call.receive&lt;ItemDraft&gt;()
+    <span class="kw">val</span> created = Item(nextId++, draft.name, draft.price, draft.category)
+    items += created
+    call.respond(HttpStatusCode.Created, created)
+}</pre>
+                </div>
+                <span class="page">10</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">Код</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">PUT и DELETE</h2>
+                    <pre class="reveal" style="font-size:20px">put(<span class="str">"/items/{id}"</span>) {
+    <span class="kw">val</span> id = call.parameters[<span class="str">"id"</span>]?.toIntOrNull() ?: <span class="kw">return@put</span> …
+    <span class="kw">val</span> draft = call.receive&lt;ItemDraft&gt;()
+    <span class="kw">val</span> index = items.indexOfFirst { it.id == id }
+    <span class="kw">if</span> (index &lt; 0) <span class="kw">return@put</span> call.respond(HttpStatusCode.NotFound, …)
+    items[index] = Item(id, draft.name, draft.price, draft.category)
+    call.respond(items[index])
+}
+delete(<span class="str">"/items/{id}"</span>) {
+    <span class="kw">val</span> id = call.parameters[<span class="str">"id"</span>]?.toIntOrNull() ?: <span class="kw">return@delete</span> …
+    <span class="kw">if</span> (!items.removeIf { it.id == id }) call.respond(HttpStatusCode.NotFound, …)
+    <span class="kw">else</span> call.respond(HttpStatusCode.NoContent)
+}</pre>
+                </div>
+                <span class="page">11</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">JSON</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:24px">В gradle дописываем, не угадываем</h2>
+                    <pre class="reveal" style="font-size:22px">plugins {
+    kotlin(<span class="str">"plugin.serialization"</span>) version <span class="str">"2.2.21"</span>
+}
+dependencies {
+    implementation(<span class="str">"io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion"</span>)
+    implementation(<span class="str">"io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion"</span>)
+}</pre>
+                    <p class="lead reveal" style="margin-top:20px"> Sync Gradle. Потом в коде: <span class="mono">install(ContentNegotiation) { json() }</span>.</p>
+                </div>
+                <span class="page">12</span>
+            </section>
+
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">HTTPie</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Коллекция — часть сдачи</h2>
+                    <ul class="plain">
+                        <li class="reveal">Показываю в HTTPie. На машинах в аудитории он будет. Postman тоже ок.</li>
+                        <li class="reveal">Своя коллекция, имя — домен. Внутри шесть запросов из таблицы.</li>
+                        <li class="reveal">POST и PUT — тело JSON. DELETE — смотрим статус, не обязательно тело.</li>
+                        <li class="reveal">curl <span class="mono">-v</span> остаётся для быстрой проверки в терминале.</li>
+                    </ul>
+                </div>
+                <span class="page">13</span>
+            </section>
+
+            <section class="slide sec-run">
+                <div class="gutter"></div>
+                <p class="kicker">Часть 1</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Считается сделанным</h2>
+                    <ul class="plain">
+                        <li class="reveal">Свой класс, список в памяти, все шесть маршрутов.</li>
+                        <li class="reveal">Фильтр реально режет. Нет id — 404. Кривой JSON — 400.</li>
+                        <li class="reveal">Коллекция в HTTPie (или Postman) проходит Send по каждому.</li>
+                    </ul>
+                </div>
+                <span class="page">14</span>
+            </section>
+
+            <section class="slide div-slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">02</p>
+                <h1 class="reveal">Часть 2. Диск</h1>
+                <p class="lead reveal">Те же запросы. Данные в Postgres. Перезапуск не стирает.</p>
+                <div class="idx">02</div>
+            </section>
+
+            <section class="slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">Зачем</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Память vs база</h2>
+                    <div class="grid-2">
+                        <div class="card reveal"><h3>mutableList</h3><p>Живёт, пока жив процесс. Удобно отладить маршруты. Для API — мало.</p></div>
+                        <div class="card reveal"><h3>Postgres</h3><p>Живёт в отдельном процессе. Сервер упал — записи на месте. Это уже сервис.</p></div>
+                    </div>
+                </div>
+                <span class="page">15</span>
+            </section>
+
+            <section class="slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">Docker</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:20px">База — одна команда</h2>
+                    <pre class="reveal" style="font-size:24px">docker run --name ithub-pg -d \
+  -e POSTGRES_PASSWORD=pass \
+  -e POSTGRES_DB=shop \
+  -p 5432:5432 \
+  postgres:16</pre>
+                    <p class="lead reveal" style="margin-top:20px">Приложение на 8080, база на 5432. Не ставим Postgres на хост руками.</p>
+                </div>
+                <span class="page">16</span>
+            </section>
+
+            <section class="slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">Exposed</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:24px">Что такое Exposed</h2>
+                    <ul class="plain">
+                        <li class="reveal">Библиотека JetBrains. SQL из Kotlin, не Hibernate и не «магия JPA».</li>
+                        <li class="reveal">Таблица — объект. Строка — код в <span class="mono">transaction { ... }</span>.</li>
+                        <li class="reveal">Нужны: <span class="mono">exposed-core</span>, <span class="mono">exposed-jdbc</span>, драйвер <span class="mono">postgresql</span>.</li>
+                    </ul>
+                </div>
+                <span class="page">17</span>
+            </section>
+
+            <section class="slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">Exposed</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:16px">Таблица = объект</h2>
+                    <pre class="reveal" style="font-size:24px"><span class="kw">object</span> Products : Table() {
+    <span class="kw">val</span> id = integer(<span class="str">"id"</span>).autoIncrement()
+    <span class="kw">val</span> name = varchar(<span class="str">"name"</span>, <span class="num">100</span>)
+    <span class="kw">val</span> price = integer(<span class="str">"price"</span>)
+    <span class="kw">override val</span> primaryKey = PrimaryKey(id)
+}</pre>
+                </div>
+                <span class="page">18</span>
+            </section>
+
+            <section class="slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">Exposed</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:16px">Вставка и выборка</h2>
+                    <pre class="reveal" style="font-size:22px">Database.connect(
+    <span class="str">"jdbc:postgresql://127.0.0.1:5432/shop"</span>,
+    user = <span class="str">"postgres"</span>, password = <span class="str">"pass"</span>
+)
+
+transaction {
+    SchemaUtils.create(Products)
+    Products.insert { it[name] = <span class="str">"Чай"</span>; it[price] = <span class="num">90</span> }
+    Products.selectAll().map { /* в Product */ }
+}</pre>
+                </div>
+                <span class="page">19</span>
+            </section>
+
+            <section class="slide sec-db">
+                <div class="gutter"></div>
+                <p class="kicker">Часть 2</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Маршруты не меняем</h2>
+                    <ul class="plain">
+                        <li class="reveal">Те же GET/POST/PUT/DELETE. Меняется только склад: list → таблица.</li>
+                        <li class="reveal">Проверка: создал через POST, убил сервер, поднял — GET тот же id.</li>
+                        <li class="reveal">Контейнер не удаляем. <span class="mono">docker stop</span> / <span class="mono">start</span> — данные на месте.</li>
+                    </ul>
+                </div>
+                <span class="page">20</span>
+            </section>
+
+            <section class="slide div-slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">03</p>
+                <h1 class="reveal">Часть 3. Вход</h1>
+                <p class="lead reveal">Пароль в хеше. Логин выдаёт билет. Билет — в заголовке.</p>
+                <div class="idx">03</div>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">BCrypt</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Пароль в базу текстом нельзя</h2>
+                    <ul class="plain">
+                        <li class="reveal">BCrypt из пароля делает длинную строку. Обратно в пароль её не превратить.</li>
+                        <li class="reveal">При логине: берём введённый пароль, считаем хеш, сравниваем с тем, что в базе.</li>
+                        <li class="reveal">Совпало — человек свой. Нет — 401. Сам пароль мы не храним и не логируем.</li>
+                    </ul>
+                </div>
+                <span class="page">21</span>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">JWT</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Токен — билет на сеанс</h2>
+                    <ul class="plain">
+                        <li class="reveal">Сервер подписывает строку секретом: кто ты и до какого часа.</li>
+                        <li class="reveal">Клиент кладёт её в <span class="mono">Authorization: Bearer …</span> на каждый запрос.</li>
+                        <li class="reveal">Подпись не бьётся или билета нет — 401. Пароль больше не шлём.</li>
+                    </ul>
+                </div>
+                <span class="page">22</span>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">JWT</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:16px">Как получают токен</h2>
+                    <pre class="reveal" style="font-size:24px">POST /register   { <span class="str">"email"</span>: <span class="str">"a@b.c"</span>, <span class="str">"password"</span>: <span class="str">"1234"</span> }
+POST /login      { <span class="str">"email"</span>: <span class="str">"a@b.c"</span>, <span class="str">"password"</span>: <span class="str">"1234"</span> }
+                 → { <span class="str">"token"</span>: <span class="str">"eyJhbGciOi…"</span> }
+
+GET /items
+Authorization: Bearer eyJhbGciOi…</pre>
+                    <p class="lead reveal" style="margin-top:16px"><span class="mono">/register</span> и <span class="mono">/login</span> без билета. Остальное — только с ним.</p>
+                </div>
+                <span class="page">23</span>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">JWT</p>
+                <div class="pad pad-tight">
+                    <h2 class="reveal" style="margin-bottom:12px">Подключить в коде</h2>
+                    <pre class="reveal" style="font-size:20px">install(Authentication) { jwtAuth() }
+routing {
+    authRoutes()                  <span class="cmt">// /register и /login открыты</span>
+    authenticate(<span class="str">"auth-jwt"</span>) {
+        itemRoutes()              <span class="cmt">// /items только с Bearer</span>
+    }
+}</pre>
+                    <p class="lead reveal" style="margin-top:16px">Готовые функции — <span class="mono">lesson-2/03-auth/</span>.</p>
+                </div>
+                <span class="page">24</span>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">JWT</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:24px">Что делает сервер</h2>
+                    <div class="grid-2">
+                        <div class="card reveal"><h3>/login</h3><p>Нашёл пользователя, BCrypt совпал — собрал JWT с email внутри, отдал строку.</p></div>
+                        <div class="card reveal"><h3>остальные маршруты</h3><p>Плагин jwt проверяет подпись. Ок — пускает в handler. Нет — даже не заходит в код списка.</p></div>
+                    </div>
+                </div>
+                <span class="page">25</span>
+            </section>
+
+            <section class="slide sec-auth">
+                <div class="gutter"></div>
+                <p class="kicker">HTTPie</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:28px">Токен в коллекции</h2>
+                    <ul class="plain">
+                        <li class="reveal">Запрос Login. Из ответа копируем token.</li>
+                        <li class="reveal">В остальных запросах заголовок <span class="mono">Authorization</span>, значение <span class="mono">Bearer </span> и токен.</li>
+                        <li class="reveal">Без заголовка тот же GET /items должен дать 401 — так и проверяем.</li>
+                    </ul>
+                </div>
+                <span class="page">26</span>
+            </section>
+
+            <section class="slide">
+                <div class="gutter"></div>
+                <p class="kicker">День</p>
+                <div class="pad">
+                    <h2 class="reveal" style="margin-bottom:32px">Как идём по парам</h2>
+                    <div class="grid-3">
+                        <div class="card reveal"><h3>Пара 1</h3><p>Теория. Домен. Класс. CRUD в памяти. Коллекция HTTPie.</p></div>
+                        <div class="card reveal"><h3>Пара 2</h3><p>Docker Postgres. Exposed. Те же маршруты пишут на диск.</p></div>
+                        <div class="card reveal"><h3>Пара 3</h3><p>Регистрация, логин, BCrypt, JWT на /items.</p></div>
+                    </div>
+                </div>
+                <span class="page">27</span>
+            </section>
+
+            <section class="slide title-slide">
+                <div class="gutter"></div>
+                <p class="kicker reveal">К вечеру</p>
+                <h1 class="reveal" style="font-size:72px">Список живёт в базе.<br>Без токена API молчит.<br>Коллекция всё это умеет.</h1>
+                <span class="page">28</span>
+            </section>
+
+        </main>
+    </div>
+
+    <div class="deck-controls" id="controls">
+        <button type="button" id="prevBtn">←</button>
+        <span id="counter">1 / 1</span>
+        <button type="button" id="nextBtn">→</button>
+    </div>
+
+    <script>
+        class SlidePresentation {
+            constructor() {
+                this.slides = document.querySelectorAll(".slide");
+                this.currentSlide = 0;
+                this.stage = document.getElementById("deckStage");
+                this.counter = document.getElementById("counter");
+                this.setupStageScale();
+                this.setupKeyboardNav();
+                this.setupTouchNav();
+                this.setupWheel();
+                document.getElementById("prevBtn").onclick = () => this.showSlide(this.currentSlide - 1);
+                document.getElementById("nextBtn").onclick = () => this.showSlide(this.currentSlide + 1);
+                this.showSlide(0);
+            }
+            setupStageScale() {
+                const scale = () => {
+                    const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+                    const x = (window.innerWidth - 1920 * factor) / 2;
+                    const y = (window.innerHeight - 1080 * factor) / 2;
+                    this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+                };
+                scale();
+                window.addEventListener("resize", scale);
+            }
+            setupKeyboardNav() {
+                document.addEventListener("keydown", (e) => {
+                    if (e.target.getAttribute("contenteditable")) return;
+                    if (["ArrowRight", " ", "PageDown"].includes(e.key)) {
+                        e.preventDefault();
+                        this.showSlide(this.currentSlide + 1);
+                    }
+                    if (["ArrowLeft", "PageUp"].includes(e.key)) {
+                        e.preventDefault();
+                        this.showSlide(this.currentSlide - 1);
+                    }
+                    if (e.key === "Home") this.showSlide(0);
+                    if (e.key === "End") this.showSlide(this.slides.length - 1);
+                });
+            }
+            setupTouchNav() {
+                let x0 = null;
+                document.addEventListener("touchstart", (e) => { x0 = e.changedTouches[0].screenX; }, { passive: true });
+                document.addEventListener("touchend", (e) => {
+                    if (x0 === null) return;
+                    const dx = e.changedTouches[0].screenX - x0;
+                    if (dx < -40) this.showSlide(this.currentSlide + 1);
+                    if (dx > 40) this.showSlide(this.currentSlide - 1);
+                    x0 = null;
+                }, { passive: true });
+            }
+            setupWheel() {
+                let t = 0;
+                window.addEventListener("wheel", (e) => {
+                    const now = Date.now();
+                    if (now - t < 450) return;
+                    t = now;
+                    if (e.deltaY > 20) this.showSlide(this.currentSlide + 1);
+                    if (e.deltaY < -20) this.showSlide(this.currentSlide - 1);
+                }, { passive: true });
+            }
+            showSlide(index) {
+                this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+                this.slides.forEach((slide, i) => {
+                    slide.classList.toggle("active", i === this.currentSlide);
+                    slide.classList.toggle("visible", i === this.currentSlide);
+                });
+                this.counter.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+            }
+        }
+
+        const deck = new SlidePresentation();
+
+        const editor = {
+            isActive: false,
+            toggleEditMode() {
+                this.isActive = !this.isActive;
+                document.getElementById("editToggle").classList.toggle("active", this.isActive);
+                document.querySelectorAll("h1,h2,h3,p,li,td,th,.kicker,.sub,.lead").forEach((el) => {
+                    el.setAttribute("contenteditable", this.isActive ? "true" : "false");
+                });
+            }
+        };
+
+        const hotzone = document.querySelector(".edit-hotzone");
+        const editToggle = document.getElementById("editToggle");
+        let hideTimeout = null;
+        hotzone.addEventListener("mouseenter", () => { clearTimeout(hideTimeout); editToggle.classList.add("show"); });
+        hotzone.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove("show"); }, 400);
+        });
+        editToggle.addEventListener("mouseenter", () => clearTimeout(hideTimeout));
+        editToggle.addEventListener("mouseleave", () => {
+            hideTimeout = setTimeout(() => { if (!editor.isActive) editToggle.classList.remove("show"); }, 400);
+        });
+        editToggle.addEventListener("click", () => editor.toggleEditMode());
+        hotzone.addEventListener("click", () => editor.toggleEditMode());
+        document.addEventListener("keydown", (e) => {
+            if ((e.key === "e" || e.key === "E") && !e.target.getAttribute("contenteditable")) {
+                editor.toggleEditMode();
+            }
+        });
+    </script>
+</body>
+</html>
