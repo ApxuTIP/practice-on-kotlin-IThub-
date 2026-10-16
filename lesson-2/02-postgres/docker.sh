@@ -6,3 +6,4 @@ docker run --name ithub-pg -d \
 
 # потом: docker stop ithub-pg   /   docker start ithub-pg
 # не делай docker rm — сотрёшь данные
+# psql -d shop -U postgres -h 127.0.0.1 -p 5432
