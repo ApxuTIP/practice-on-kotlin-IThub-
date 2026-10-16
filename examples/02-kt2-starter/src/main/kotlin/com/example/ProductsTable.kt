@@ -2,10 +2,10 @@ package com.example
 
 import org.jetbrains.exposed.sql.Table
 
-object ItemsTable : Table("items") {
+object ProductsTable : Table("items") {
     val id = integer("id").autoIncrement()
-    val name = varchar("name", 100)
+    val title = varchar("title", 100)
     val price = integer("price")
-    val category = varchar("category", 100)
+    val city = city("category", 100)
     override val primaryKey = PrimaryKey(id)
 }

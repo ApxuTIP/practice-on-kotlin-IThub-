@@ -78,6 +78,17 @@ fun main() {
                 if (!items.removeIf { it.id == id }) call.respond(HttpStatusCode.NotFound,)
                 else call.respond(HttpStatusCode.NoContent)
             }
+            post("/create-table"){
+                Database.connect(
+                    url = "jdbc:postgresql://127.0.0.1:5432/shop",
+                    driver = "org.postgresql.Driver",
+                    user = "postgres",
+                    password = "pass",
+                )
+                transaction {
+                    SchemaUtils.create(ItemsTable)
+                }
+            }
         }
     }.start(wait = true)
 }
