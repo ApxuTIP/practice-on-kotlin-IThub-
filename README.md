@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ИТхаб, осень 2026: бэкенд на Kotlin / Ktor
 
 Дисциплина: кроссплатформенная разработка на Kotlin.  
@@ -183,4 +182,3 @@ Gradle Wrapper 8.14 поддерживает обе версии: [таблиц�
 - **Красные импорты Ktor**: проверь интернет, отключённый Offline Mode и дождись Gradle Sync.
 - **Main class not found**: точка входа — `com.example.ApplicationKt`, файл `src/main/kotlin/com/example/Application.kt`.
 - **Address already in use**: останови другой сервер или выбери порт 18080. В IDEA добавь переменную окружения `PORT=18080` в конфигурации запуска. В macOS/Linux: `PORT=18080 ./gradlew run`. В PowerShell: `$env:PORT="18080"`, затем `.\gradlew.bat run`. Проверяй http://localhost:18080/.
->>>>>>> master
