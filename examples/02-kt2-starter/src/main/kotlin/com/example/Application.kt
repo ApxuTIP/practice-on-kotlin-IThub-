@@ -49,12 +49,16 @@ fun main() {
         install(ContentNegotiation) { json() }
         install(Authentication) { jwtAuth() }
 
+        installSockets()
+
         routing {
             get("/") {
                 call.respond(Ok())
             }
 
             authRoutes()
+
+            chatRoutes()
 
             authenticate("auth-jwt") {
                 get("/items") {
@@ -100,6 +104,7 @@ fun main() {
                     items[index] = Avito(id, draft.name, draft.price, draft.category)
                     call.respond(items[index])
                 }
+
                 delete("/items/{id}") {
                     val role = call.principal<JWTPrincipal>()
                         ?.payload?.getClaim("role")?.asString()
