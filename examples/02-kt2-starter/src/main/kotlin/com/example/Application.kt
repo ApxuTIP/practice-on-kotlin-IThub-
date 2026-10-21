@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.install
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -15,8 +16,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import com.example.Products
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 
 @Serializable
 data class Ok(val ok: Boolean = true)
@@ -35,9 +34,7 @@ data class Avito(
 @Serializable
 data class ItemDraft(val name: String, val price: Int, val category: String)
 
-
 fun main() {
-
     Database.connect(
         url = "jdbc:sqlite:data.db",
         driver = "org.sqlite.JDBC"
@@ -50,7 +47,6 @@ fun main() {
         var nextId = 1
 
         install(ContentNegotiation) { json() }
-
         install(Authentication) { jwtAuth() }
 
         routing {
@@ -104,8 +100,15 @@ fun main() {
                     items[index] = Avito(id, draft.name, draft.price, draft.category)
                     call.respond(items[index])
                 }
-
                 delete("/items/{id}") {
+                    val role = call.principal<JWTPrincipal>()
+                        ?.payload?.getClaim("role")?.asString()
+
+                    if (role != "admin") {
+                        call.respond(HttpStatusCode.Forbidden, ErrorBody("admin only"))
+                        return@delete
+                    }
+
                     val id = call.parameters["id"]?.toIntOrNull()
                     if (id == null) {
                         call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
