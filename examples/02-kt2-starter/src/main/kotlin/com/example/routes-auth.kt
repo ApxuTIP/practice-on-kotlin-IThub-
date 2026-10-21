@@ -12,9 +12,10 @@ fun Route.authRoutes() {
             call.respond(HttpStatusCode.Conflict, ErrorBody("email taken"))
             return@post
         }
-        users += User(draft.email, hashPassword(draft.password))
+        users += User(draft.email, hashPassword(draft.password), draft.role)
         call.respond(HttpStatusCode.Created, Ok())
     }
+
     post("/login") {
         val draft = call.receive<AuthDraft>()
         val user = users.find { it.email == draft.email }
@@ -22,6 +23,6 @@ fun Route.authRoutes() {
             call.respond(HttpStatusCode.Unauthorized, ErrorBody("bad credentials"))
             return@post
         }
-        call.respond(TokenResponse(makeToken(user.email)))
+        call.respond(TokenResponse(makeToken(user.email, user.role)))
     }
 }
