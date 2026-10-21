@@ -18,6 +18,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:0.57.0")
     implementation("org.jetbrains.exposed:exposed-jdbc:0.57.0")
     implementation("org.postgresql:postgresql:42.7.4")
+    implementation("org.xerial:sqlite-jdbc:3.45.1.0")
 }
 
 java {
