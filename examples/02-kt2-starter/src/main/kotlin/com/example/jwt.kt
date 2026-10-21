@@ -5,10 +5,11 @@ import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 
-fun makeToken(email: String): String =
+fun makeToken(email: String, role: String): String =
     JWT.create()
         .withIssuer(JWT_ISSUER)
         .withClaim("email", email)
+        .withClaim("role", role)
         .sign(Algorithm.HMAC256(JWT_SECRET))
 
 fun AuthenticationConfig.jwtAuth() {
