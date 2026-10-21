@@ -3,6 +3,7 @@ package com.example
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.install
+import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -22,6 +23,7 @@ data class Ok(val ok: Boolean = true)
 
 @Serializable
 data class ErrorBody(val error: String)
+
 @Serializable
 data class Avito(
     val id: Int,
@@ -49,73 +51,79 @@ fun main() {
 
         install(ContentNegotiation) { json() }
 
+        install(Authentication) { jwtAuth() }
+
         routing {
             get("/") {
                 call.respond(Ok())
             }
 
-            get("/items") {
-                val city = call.request.queryParameters["city"]
-                val result = if (city.isNullOrBlank()) items
-                else items.filter { it.city == city }
-                call.respond(result)
-            }
+            authRoutes()
 
-            get("/items/{id}") {
-                val id = call.parameters["id"]?.toIntOrNull()
-                if (id == null) {
-                    call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
-                    return@get
+            authenticate("auth-jwt") {
+                get("/items") {
+                    val city = call.request.queryParameters["city"]
+                    val result = if (city.isNullOrBlank()) items
+                    else items.filter { it.city == city }
+                    call.respond(result)
                 }
-                val item = items.find { it.id == id }
-                if (item == null) {
-                    call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
-                } else {
-                    call.respond(item)
-                }
-            }
 
-            post("/items") {
-                val draft = call.receive<ItemDraft>()
-                val created = Avito(nextId++, draft.name, draft.price, draft.category)
-                items += created
-                call.respond(HttpStatusCode.Created, created)
-            }
+                get("/items/{id}") {
+                    val id = call.parameters["id"]?.toIntOrNull()
+                    if (id == null) {
+                        call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
+                        return@get
+                    }
+                    val item = items.find { it.id == id }
+                    if (item == null) {
+                        call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
+                    } else {
+                        call.respond(item)
+                    }
+                }
 
-            put("/items/{id}") {
-                val id = call.parameters["id"]?.toIntOrNull()
-                if (id == null) {
-                    call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
-                    return@put
+                post("/items") {
+                    val draft = call.receive<ItemDraft>()
+                    val created = Avito(nextId++, draft.name, draft.price, draft.category)
+                    items += created
+                    call.respond(HttpStatusCode.Created, created)
                 }
-                val draft = call.receive<ItemDraft>()
-                val index = items.indexOfFirst { it.id == id }
-                if (index < 0) {
-                    call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
-                    return@put
-                }
-                items[index] = Avito(id, draft.name, draft.price, draft.category)
-                call.respond(items[index])
-            }
 
-            delete("/items/{id}") {
-                val id = call.parameters["id"]?.toIntOrNull()
-                if (id == null) {
-                    call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
-                    return@delete
+                put("/items/{id}") {
+                    val id = call.parameters["id"]?.toIntOrNull()
+                    if (id == null) {
+                        call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
+                        return@put
+                    }
+                    val draft = call.receive<ItemDraft>()
+                    val index = items.indexOfFirst { it.id == id }
+                    if (index < 0) {
+                        call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
+                        return@put
+                    }
+                    items[index] = Avito(id, draft.name, draft.price, draft.category)
+                    call.respond(items[index])
                 }
-                if (!items.removeIf { it.id == id }) {
-                    call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
-                } else {
-                    call.respond(HttpStatusCode.NoContent)
-                }
-            }
 
-            post("/create-table") {
-                transaction {
-                    SchemaUtils.create(Products)
+                delete("/items/{id}") {
+                    val id = call.parameters["id"]?.toIntOrNull()
+                    if (id == null) {
+                        call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
+                        return@delete
+                    }
+                    if (!items.removeIf { it.id == id }) {
+                        call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
+                    } else {
+                        call.respond(HttpStatusCode.NoContent)
+                    }
                 }
-                call.respond(Ok())
+
+                post("/create-table") {
+                    transaction {
+                        SchemaUtils.create(Products)
+                    }
+                    call.respond(Ok())
+                }
             }
         }
     }.start(wait = true)
