@@ -3,12 +3,16 @@ package com.example
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AuthDraft(val email: String, val password: String)
+data class AuthDraft(
+    val email: String,
+    val password: String,
+    val role: String = "user"
+)
 
 @Serializable
 data class TokenResponse(val token: String)
 
-data class User(val email: String, val passwordHash: String)
+data class User(val email: String, val passwordHash: String, val role: String)
 
 val users = mutableListOf<User>()
 
