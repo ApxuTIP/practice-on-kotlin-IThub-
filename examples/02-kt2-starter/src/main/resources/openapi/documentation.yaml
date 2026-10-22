@@ -1,0 +1,94 @@
+openapi: 3.0.1
+info:
+  title: IThub shop API
+  version: "1.0.0"
+  description: CRUD одной сущности.
+paths:
+  /items:
+    get:
+      summary: Список
+      parameters:
+        - in: query
+          name: city
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Массив
+    post:
+      summary: Создать
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemDraft"
+            example:
+              name: Чай
+              price: 90
+              category: drinks
+      responses:
+        "201":
+          description: Создан
+        "400":
+          description: Кривое тело
+  /items/{id}:
+    get:
+      summary: Один объект
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Найден
+        "400":
+          description: id не число
+        "404":
+          description: Нет такого id
+    put:
+      summary: Заменить целиком
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemDraft"
+      responses:
+        "200":
+          description: Обновлён
+        "404":
+          description: Нет такого id
+    delete:
+      summary: Удалить
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Удалён
+        "404":
+          description: Нет такого id
+components:
+  schemas:
+    ItemDraft:
+      type: object
+      required: [name, price, category]
+      properties:
+        name:
+          type: string
+        price:
+          type: integer
+        category:
+          type: string
