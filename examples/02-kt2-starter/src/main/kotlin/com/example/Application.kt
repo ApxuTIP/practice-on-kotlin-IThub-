@@ -2,7 +2,7 @@ package com.example
 
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.application.install
+import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
@@ -35,104 +35,103 @@ data class Avito(
 data class ItemDraft(val name: String, val price: Int, val category: String)
 
 fun main() {
+    embeddedServer(Netty, port = 8080, host = "127.0.0.1", module = Application::module)
+        .start(wait = true)
+}
+
+fun Application.module() {
     Database.connect(
         url = "jdbc:sqlite:data.db",
         driver = "org.sqlite.JDBC"
     )
 
-    val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
-    embeddedServer(Netty, port = port, host = "127.0.0.1") {
+    var items = mutableListOf<Avito>()
+    var nextId = 1
 
-        var items = mutableListOf<Avito>()
-        var nextId = 1
+    install(ContentNegotiation) { json() }
+    install(Authentication) { jwtAuth() }
+    installSockets()
 
-        install(ContentNegotiation) { json() }
-        install(Authentication) { jwtAuth() }
+    routing {
+        get("/") {
+            call.respond(Ok())
+        }
 
-        installSockets()
+        authRoutes()
+        chatRoutes()
 
-        routing {
-            get("/") {
+        authenticate("auth-jwt") {
+            get("/items") {
+                val city = call.request.queryParameters["city"]
+                val result = if (city.isNullOrBlank()) items
+                else items.filter { it.city == city }
+                call.respond(result)
+            }
+
+            get("/items/{id}") {
+                val id = call.parameters["id"]?.toIntOrNull()
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
+                    return@get
+                }
+                val item = items.find { it.id == id }
+                if (item == null) {
+                    call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
+                } else {
+                    call.respond(item)
+                }
+            }
+
+            post("/items") {
+                val draft = call.receive<ItemDraft>()
+                val created = Avito(nextId++, draft.name, draft.price, draft.category)
+                items += created
+                call.respond(HttpStatusCode.Created, created)
+            }
+
+            put("/items/{id}") {
+                val id = call.parameters["id"]?.toIntOrNull()
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
+                    return@put
+                }
+                val draft = call.receive<ItemDraft>()
+                val index = items.indexOfFirst { it.id == id }
+                if (index < 0) {
+                    call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
+                    return@put
+                }
+                items[index] = Avito(id, draft.name, draft.price, draft.category)
+                call.respond(items[index])
+            }
+
+            delete("/items/{id}") {
+                val role = call.principal<JWTPrincipal>()
+                    ?.payload?.getClaim("role")?.asString()
+
+                if (role != "admin") {
+                    call.respond(HttpStatusCode.Forbidden, ErrorBody("admin only"))
+                    return@delete
+                }
+
+                val id = call.parameters["id"]?.toIntOrNull()
+                if (id == null) {
+                    call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
+                    return@delete
+                }
+                if (!items.removeIf { it.id == id }) {
+                    call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
+                } else {
+                    call.respond(HttpStatusCode.NoContent)
+                }
+            }
+
+            post("/create-table") {
+                transaction {
+                    SchemaUtils.create(Products)
+                }
                 call.respond(Ok())
             }
-
-            authRoutes()
-
-            chatRoutes()
-
-            authenticate("auth-jwt") {
-                get("/items") {
-                    val city = call.request.queryParameters["city"]
-                    val result = if (city.isNullOrBlank()) items
-                    else items.filter { it.city == city }
-                    call.respond(result)
-                }
-
-                get("/items/{id}") {
-                    val id = call.parameters["id"]?.toIntOrNull()
-                    if (id == null) {
-                        call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
-                        return@get
-                    }
-                    val item = items.find { it.id == id }
-                    if (item == null) {
-                        call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
-                    } else {
-                        call.respond(item)
-                    }
-                }
-
-                post("/items") {
-                    val draft = call.receive<ItemDraft>()
-                    val created = Avito(nextId++, draft.name, draft.price, draft.category)
-                    items += created
-                    call.respond(HttpStatusCode.Created, created)
-                }
-
-                put("/items/{id}") {
-                    val id = call.parameters["id"]?.toIntOrNull()
-                    if (id == null) {
-                        call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
-                        return@put
-                    }
-                    val draft = call.receive<ItemDraft>()
-                    val index = items.indexOfFirst { it.id == id }
-                    if (index < 0) {
-                        call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
-                        return@put
-                    }
-                    items[index] = Avito(id, draft.name, draft.price, draft.category)
-                    call.respond(items[index])
-                }
-
-                delete("/items/{id}") {
-                    val role = call.principal<JWTPrincipal>()
-                        ?.payload?.getClaim("role")?.asString()
-
-                    if (role != "admin") {
-                        call.respond(HttpStatusCode.Forbidden, ErrorBody("admin only"))
-                        return@delete
-                    }
-
-                    val id = call.parameters["id"]?.toIntOrNull()
-                    if (id == null) {
-                        call.respond(HttpStatusCode.BadRequest, ErrorBody("id must be int"))
-                        return@delete
-                    }
-                    if (!items.removeIf { it.id == id }) {
-                        call.respond(HttpStatusCode.NotFound, ErrorBody("not found"))
-                    } else {
-                        call.respond(HttpStatusCode.NoContent)
-                    }
-                }
-
-                post("/create-table") {
-                    transaction {
-                        SchemaUtils.create(Products)
-                    }
-                    call.respond(Ok())
-                }
-            }
         }
-    }.start(wait = true)
+    }
 }
